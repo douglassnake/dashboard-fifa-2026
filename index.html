@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard Interativo | Estatísticas FIFA 2026</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: rgba(10, 20, 36, 0.84);
+      --panel2: rgba(16, 28, 48, 0.9);
+      --card: rgba(12, 23, 41, 0.88);
+      --muted: #b7c1d6;
+      --text: #f8fbff;
+      --accent: #38bdf8;
+      --accent2: #f472b6;
+      --accent3: #22c55e;
+      --accent4: #a855f7;
+      --accent5: #f59e0b;
+      --accent6: #14b8a6;
+      --danger: #ef4444;
+      --border: rgba(255,255,255,.12);
+      --grid: rgba(255,255,255,.10);
+      --shadow: 0 18px 50px rgba(0,0,0,.30);
+      --radius: 18px;
+      --radius-sm: 12px;
+      --font: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 6% 10%, rgba(56,189,248,.28), transparent 24%),
+        radial-gradient(circle at 92% 8%, rgba(244,114,182,.24), transparent 28%),
+        radial-gradient(circle at 88% 76%, rgba(34,197,94,.20), transparent 26%),
+        radial-gradient(circle at 18% 82%, rgba(245,158,11,.16), transparent 20%),
+        linear-gradient(140deg, #07111f 0%, #0b1630 46%, #0b1324 100%);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+    }
+    .app { padding: 24px; max-width: 1500px; margin: 0 auto; }
+    header { display:flex; gap:20px; align-items:flex-end; justify-content:space-between; margin-bottom: 18px; }
+    .title h1 {
+      margin:0 0 8px;
+      font-size: clamp(26px, 3.2vw, 44px);
+      letter-spacing:-.03em;
+      line-height:1.05;
+      background: linear-gradient(90deg, #f8fbff 0%, #8be1ff 32%, #f8a6d3 68%, #fde68a 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .title p { margin:0; color: var(--muted); font-size: 14px; }
+    .badge {
+      padding:10px 14px;
+      border:1px solid rgba(255,255,255,.15);
+      border-radius:999px;
+      background:linear-gradient(135deg, rgba(56,189,248,.16), rgba(244,114,182,.14));
+      color:#fce7f3;
+      white-space:nowrap;
+      font-size:13px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+    }
+    .grid { display:grid; gap:16px; }
+    .kpis { grid-template-columns: repeat(6, minmax(0,1fr)); margin: 20px 0; }
+    .card, .panel {
+      background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.035));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .kpi {
+      padding:16px;
+      min-height:112px;
+      position:relative;
+      overflow:hidden;
+      isolation:isolate;
+    }
+    .kpi:before {
+      content:"";
+      position:absolute;
+      inset:0;
+      background: linear-gradient(135deg, rgba(255,255,255,.06), transparent 42%);
+      z-index:-1;
+    }
+    .kpi:after {
+      content:"";
+      position:absolute;
+      width:120px;
+      height:120px;
+      right:-34px;
+      top:-44px;
+      border-radius:999px;
+      filter: blur(0px);
+      opacity:.9;
+    }
+    .kpi:nth-child(1):after { background: rgba(56,189,248,.24); }
+    .kpi:nth-child(2):after { background: rgba(239,68,68,.20); }
+    .kpi:nth-child(3):after { background: rgba(34,197,94,.20); }
+    .kpi:nth-child(4):after { background: rgba(168,85,247,.20); }
+    .kpi:nth-child(5):after { background: rgba(245,158,11,.22); }
+    .kpi:nth-child(6):after { background: rgba(244,114,182,.22); }
+    .kpi:nth-child(1) { border-color: rgba(56,189,248,.28); }
+    .kpi:nth-child(2) { border-color: rgba(239,68,68,.24); }
+    .kpi:nth-child(3) { border-color: rgba(34,197,94,.24); }
+    .kpi:nth-child(4) { border-color: rgba(168,85,247,.24); }
+    .kpi:nth-child(5) { border-color: rgba(245,158,11,.24); }
+    .kpi:nth-child(6) { border-color: rgba(244,114,182,.24); }
+    .kpi .label { color: var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.08em; }
+    .kpi .value { font-size:22px; font-weight:800; margin-top:10px; letter-spacing:-.02em; }
+    .kpi .sub { color:#e6eefc; margin-top:6px; font-size:13px; }
+    .controls { display:grid; grid-template-columns: 1.25fr 1fr 1fr 1fr auto; gap:12px; padding:14px; margin-bottom:16px; align-items:end; }
+    label { display:block; color:var(--muted); font-size:12px; margin-bottom:7px; }
+    select, input[type="search"], input[type="range"] {
+      width:100%;
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:12px;
+      background:linear-gradient(180deg, rgba(7,18,34,.96), rgba(10,20,35,.82));
+      background-color:#071222;
+      color:var(--text);
+      padding:10px 12px;
+      outline:none;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+      color-scheme: dark;
+    }
+    select option {
+      background-color:#0b1220;
+      color:#f8fbff;
+    }
+    select option:checked {
+      background-color:#2563eb;
+      color:#ffffff;
+    }
+    select:focus, input[type="search"]:focus {
+      border-color: rgba(56,189,248,.55);
+      box-shadow: 0 0 0 3px rgba(56,189,248,.15);
+    }
+    input[type="range"] { padding:10px 0; accent-color: var(--accent4); }
+    button {
+      border:0;
+      border-radius:12px;
+      padding:11px 14px;
+      background:linear-gradient(135deg,var(--accent),var(--accent4) 55%, var(--accent2));
+      color:#fff;
+      font-weight:700;
+      cursor:pointer;
+      box-shadow:0 10px 30px rgba(168,85,247,.28);
+    }
+    .main { grid-template-columns: 1.3fr .9fr; align-items:start; }
+    .panel { padding:16px; overflow:hidden; }
+    .panel h2 { font-size:16px; margin:0 0 14px; letter-spacing:-.01em; color:#f8fbff; }
+    .chart { min-height: 360px; }
+    .chart svg { width:100%; height:100%; display:block; }
+    .small-grid { grid-template-columns: repeat(2,minmax(0,1fr)); margin-top:16px; }
+    .two-col { grid-template-columns: 1fr 1fr; margin-top:16px; }
+    .detail-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .detail-table td { padding:8px 0; border-bottom:1px solid var(--border); color:#d8e2f2; }
+    .detail-table tr:nth-child(5n+1) td:nth-child(2) { color:#7dd3fc; }
+    .detail-table tr:nth-child(5n+2) td:nth-child(2) { color:#f9a8d4; }
+    .detail-table tr:nth-child(5n+3) td:nth-child(2) { color:#86efac; }
+    .detail-table tr:nth-child(5n+4) td:nth-child(2) { color:#c4b5fd; }
+    .detail-table tr:nth-child(5n) td:nth-child(2) { color:#fcd34d; }
+    .detail-table td:nth-child(2) { text-align:right; font-weight:700; }
+    .table-panel { margin-top:16px; }
+    .table-wrap { overflow:auto; max-height:520px; border-radius:14px; border:1px solid var(--border); }
+    table { width:100%; border-collapse:collapse; min-width: 1000px; }
+    th, td { padding:10px 12px; border-bottom:1px solid var(--border); font-size:13px; text-align:left; }
+    th {
+      position:sticky;
+      top:0;
+      background:linear-gradient(180deg, rgba(19,32,56,.96), rgba(15,26,45,.96));
+      z-index:2;
+      cursor:pointer;
+      user-select:none;
+      color:#edf4ff;
+    }
+    tbody tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+    td.num { text-align:right; font-variant-numeric: tabular-nums; }
+    tr:hover td { background:rgba(255,255,255,.06); }
+    .rank-pill {
+      display:inline-block;
+      min-width:34px;
+      text-align:center;
+      padding:4px 8px;
+      border-radius:999px;
+      background:linear-gradient(135deg, rgba(56,189,248,.18), rgba(168,85,247,.22));
+      color:#e0f2fe;
+      font-weight:700;
+      border:1px solid rgba(255,255,255,.10);
+    }
+    .legend { display:flex; gap:12px; align-items:center; flex-wrap:wrap; color:var(--muted); font-size:12px; margin-top:8px; }
+    .dot { width:10px; height:10px; border-radius:99px; display:inline-block; background:var(--accent); box-shadow:0 0 0 3px rgba(56,189,248,.14); }
+    .dot.green { background:var(--accent2); box-shadow:0 0 0 3px rgba(244,114,182,.14); }
+    .footer { color: var(--muted); font-size:12px; margin:20px 2px 0; }
+    .tooltip {
+      position: fixed;
+      pointer-events:none;
+      background:rgba(2,6,23,.96);
+      color:#fff;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:10px;
+      padding:8px 10px;
+      font-size:12px;
+      opacity:0;
+      transform:translate(-50%,-120%);
+      z-index:1000;
+      white-space:nowrap;
+      box-shadow:0 12px 30px rgba(0,0,0,.28);
+    }
+    .muted { color: var(--muted); }
+    .compare-names { display:flex; justify-content:space-between; color:#d8e2f2; font-size:13px; margin-top:8px; gap:16px; }
+    @media (max-width: 1100px) {
+      .kpis { grid-template-columns: repeat(3, minmax(0,1fr)); }
+      .main, .two-col { grid-template-columns: 1fr; }
+      .controls { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 720px) {
+      .app { padding: 16px; }
+      header { flex-direction:column; align-items:flex-start; }
+      .kpis { grid-template-columns: 1fr; }
+      .controls { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="title">
+        <h1>Dashboard Interativo<br>Estatísticas das Seleções — FIFA 2026</h1>
+        <p>Ranking por nota geral, ataque, defesa, controle de jogo, intensidade física e disciplina.</p>
+      </div>
+      <div class="badge">Base: 48 seleções · Gerado em 27/06/2026 23:11</div>
+    </header>
+
+    <section class="grid kpis" id="kpis"></section>
+
+    <section class="panel controls">
+      <div>
+        <label>Métrica do ranking</label>
+        <select id="metric"></select>
+      </div>
+      <div>
+        <label>Seleção principal</label>
+        <select id="teamA"></select>
+      </div>
+      <div>
+        <label>Comparar com</label>
+        <select id="teamB"></select>
+      </div>
+      <div>
+        <label>Top N: <span id="topNLabel">10</span></label>
+        <input id="topN" type="range" min="5" max="25" value="10" step="1">
+      </div>
+      <button id="reset">Resetar</button>
+    </section>
+
+    <section class="grid main">
+      <div class="panel">
+        <h2 id="barTitle">Ranking</h2>
+        <div class="chart" id="barChart"></div>
+        <div class="legend"><span class="dot"></span> Seleções ranqueadas pela métrica escolhida · cores das barras seguem o perfil dominante</div>
+      </div>
+      <div class="panel">
+        <h2>Perfil comparativo</h2>
+        <div class="chart" id="radarChart"></div>
+        <div class="compare-names"><span id="nameA"></span><span id="nameB"></span></div>
+      </div>
+    </section>
+
+    <section class="grid two-col">
+      <div class="panel">
+        <h2>Ataque × Defesa</h2>
+        <div class="chart" id="scatterChart"></div>
+        <div class="legend"><span class="dot"></span> Seleção principal <span class="dot green"></span> Seleção comparada · demais pontos coloridos por perfil</div>
+      </div>
+      <div class="panel">
+        <h2>Raio-X da seleção principal</h2>
+        <table class="detail-table" id="details"></table>
+      </div>
+    </section>
+
+    <section class="panel table-panel">
+      <h2>Tabela interativa</h2>
+      <div style="margin-bottom:12px; display:grid; grid-template-columns: 1fr 220px; gap:12px; align-items:center;">
+        <input id="search" type="search" placeholder="Buscar seleção...">
+        <select id="profileFilter"><option value="">Todos os perfis</option></select>
+      </div>
+      <div class="table-wrap"><table id="dataTable"></table></div>
+    </section>
+
+    <p class="footer">Modelo de nota geral: 30% Ataque + 25% Defesa + 20% Controle + 15% Físico + 10% Disciplina. Dados extraídos da planilha de análise gerada a partir das estatísticas organizadas.</p>
+  </div>
+  <div class="tooltip" id="tooltip"></div>
+
+<script>
+const DATA = [{"Equipe": "Alemanha", "Gols": 10, "Assistências": 9, "Finalizações": 53, "Finalizações certas": 22, "Conversão finalizações (%)": 19, "GE": 7.38, "Escanteios": 18, "Posse de bola (%)": 53, "Passes": 1887, "Precisão passes (%)": 89, "Tentativas ruptura defensiva": 63, "Precisão rupturas (%)": 56, "Tentativas mudança direção": 11, "Precisão mudanças direção (%)": 73, "Gols contra": 0, "Gols sofridos": 4, "Perdas forçadas": 144, "Tempo recuperação bola (s)": 41, "Pressões defensivas": 751, "Pressões defensivas com êxito": 155, "Jogos sem sofrer gols": 0, "Faltas cometidas": 33, "Faltas sofridas": 30, "Cartões amarelos": 1, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 0, "Velocidade média (km/h)": 6.37, "Corridas alta velocidade": 4351, "Arrancadas": 1518, "Distância total (m)": 356558.15, "Ataque": 84.11069804512428, "Controle": 61.113071008593394, "Defesa": 62.96401500010125, "Intensidade física": 99.23599130497941, "Disciplina": 66.2960306073649, "Nota geral": 74.71182912176467, "Ranking": 1, "Perfil": "Intensidade física"}, {"Equipe": "França", "Gols": 10, "Assistências": 9, "Finalizações": 48, "Finalizações certas": 22, "Conversão finalizações (%)": 21, "GE": 4.96, "Escanteios": 15, "Posse de bola (%)": 50, "Passes": 1737, "Precisão passes (%)": 90, "Tentativas ruptura defensiva": 77, "Precisão rupturas (%)": 69, "Tentativas mudança direção": 18, "Precisão mudanças direção (%)": 94, "Gols contra": 0, "Gols sofridos": 2, "Perdas forçadas": 139, "Tempo recuperação bola (s)": 46.94, "Pressões defensivas": 768, "Pressões defensivas com êxito": 129, "Jogos sem sofrer gols": 1, "Faltas cometidas": 24, "Faltas sofridas": 20, "Cartões amarelos": 1, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 4, "Velocidade média (km/h)": 6.1, "Corridas alta velocidade": 3630, "Arrancadas": 1327, "Distância total (m)": 337006.23, "Ataque": 77.38832332802794, "Controle": 76.88478851165418, "Defesa": 65.26223855384603, "Intensidade física": 73.00885704877808, "Disciplina": 60.29070164651227, "Nota geral": 71.88941306116867, "Ranking": 2, "Perfil": "Ataque"}, {"Equipe": "Espanha", "Gols": 5, "Assistências": 4, "Finalizações": 55, "Finalizações certas": 16, "Conversão finalizações (%)": 9, "GE": 6.58, "Escanteios": 23, "Posse de bola (%)": 62, "Passes": 2191, "Precisão passes (%)": 92, "Tentativas ruptura defensiva": 78, "Precisão rupturas (%)": 72, "Tentativas mudança direção": 21, "Precisão mudanças direção (%)": 95, "Gols contra": 0, "Gols sofridos": 0, "Perdas forçadas": 146, "Tempo recuperação bola (s)": 32.04, "Pressões defensivas": 629, "Pressões defensivas com êxito": 102, "Jogos sem sofrer gols": 3, "Faltas cometidas": 34, "Faltas sofridas": 15, "Cartões amarelos": 2, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 6, "Velocidade média (km/h)": 6.09, "Corridas alta velocidade": 3716, "Arrancadas": 1256, "Distância total (m)": 342164.48, "Ataque": 60.11487072086981, "Controle": 90.81618381618382, "Defesa": 77.30526736077468, "Intensidade física": 72.2681847034205, "Disciplina": 48.61595044521874, "Nota geral": 71.22583756972632, "Ranking": 3, "Perfil": "Controle"}, {"Equipe": "Canadá", "Gols": 8, "Assistências": 3, "Finalizações": 59, "Finalizações certas": 22, "Conversão finalizações (%)": 14, "GE": 7, "Escanteios": 35, "Posse de bola (%)": 53, "Passes": 1340, "Precisão passes (%)": 84, "Tentativas ruptura defensiva": 75, "Precisão rupturas (%)": 61, "Tentativas mudança direção": 16, "Precisão mudanças direção (%)": 81, "Gols contra": 0, "Gols sofridos": 3, "Perdas forçadas": 131, "Tempo recuperação bola (s)": 31.5, "Pressões defensivas": 566, "Pressões defensivas com êxito": 109, "Jogos sem sofrer gols": 1, "Faltas cometidas": 32, "Faltas sofridas": 49, "Cartões amarelos": 5, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 5, "Velocidade média (km/h)": 6.03, "Corridas alta velocidade": 3997, "Arrancadas": 1425, "Distância total (m)": 337187.2, "Ataque": 76.90661636659709, "Controle": 61.80566614148704, "Defesa": 61.413622070006404, "Intensidade física": 77.97468652133357, "Disciplina": 58.95276809910956, "Nota geral": 68.37800344388913, "Ranking": 4, "Perfil": "Intensidade física"}, {"Equipe": "EUA", "Gols": 8, "Assistências": 4, "Finalizações": 44, "Finalizações certas": 15, "Conversão finalizações (%)": 18, "GE": 5.24, "Escanteios": 19, "Posse de bola (%)": 54, "Passes": 1628, "Precisão passes (%)": 87, "Tentativas ruptura defensiva": 89, "Precisão rupturas (%)": 63, "Tentativas mudança direção": 16, "Precisão mudanças direção (%)": 81, "Gols contra": 0, "Gols sofridos": 4, "Perdas forçadas": 136, "Tempo recuperação bola (s)": 36.41, "Pressões defensivas": 638, "Pressões defensivas com êxito": 139, "Jogos sem sofrer gols": 1, "Faltas cometidas": 38, "Faltas sofridas": 42, "Cartões amarelos": 5, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 8, "Velocidade média (km/h)": 6.23, "Corridas alta velocidade": 4388, "Arrancadas": 1513, "Distância total (m)": 358610.48, "Ataque": 61.36034951418395, "Controle": 70.82650599814778, "Defesa": 63.97831798281401, "Intensidade física": 95.29551237566506, "Disciplina": 49.510942588417485, "Nota geral": 67.81340666477975, "Ranking": 5, "Perfil": "Intensidade física"}, {"Equipe": "Senegal", "Gols": 8, "Assistências": 8, "Finalizações": 49, "Finalizações certas": 17, "Conversão finalizações (%)": 16, "GE": 5.14, "Escanteios": 20, "Posse de bola (%)": 52, "Passes": 1610, "Precisão passes (%)": 88, "Tentativas ruptura defensiva": 69, "Precisão rupturas (%)": 58, "Tentativas mudança direção": 23, "Precisão mudanças direção (%)": 96, "Gols contra": 0, "Gols sofridos": 6, "Perdas forçadas": 113, "Tempo recuperação bola (s)": 45.34, "Pressões defensivas": 703, "Pressões defensivas com êxito": 108, "Jogos sem sofrer gols": 1, "Faltas cometidas": 24, "Faltas sofridas": 28, "Cartões amarelos": 2, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 8, "Velocidade média (km/h)": 5.89, "Corridas alta velocidade": 3738, "Arrancadas": 1411, "Distância total (m)": 339841.4, "Ataque": 69.42194572530055, "Controle": 73.64039525979824, "Defesa": 53.41938481939614, "Intensidade física": 70.55191025618846, "Disciplina": 56.672587734280704, "Nota geral": 65.15955428625519, "Ranking": 6, "Perfil": "Controle"}, {"Equipe": "Bélgica", "Gols": 6, "Assistências": 3, "Finalizações": 73, "Finalizações certas": 21, "Conversão finalizações (%)": 8, "GE": 6.55, "Escanteios": 14, "Posse de bola (%)": 52, "Passes": 1643, "Precisão passes (%)": 88, "Tentativas ruptura defensiva": 76, "Precisão rupturas (%)": 57, "Tentativas mudança direção": 14, "Precisão mudanças direção (%)": 79, "Gols contra": 0, "Gols sofridos": 2, "Perdas forçadas": 130, "Tempo recuperação bola (s)": 39.11, "Pressões defensivas": 597, "Pressões defensivas com êxito": 89, "Jogos sem sofrer gols": 1, "Faltas cometidas": 29, "Faltas sofridas": 33, "Cartões amarelos": 3, "Cartões vermelhos": 1, "Cartões vermelhos indiretos": 0, "Impedimentos": 4, "Velocidade média (km/h)": 6.25, "Corridas alta velocidade": 4044, "Arrancadas": 1447, "Distância total (m)": 344936.19, "Ataque": 63.231129036082606, "Controle": 64.52398182248928, "Defesa": 58.77770764298708, "Intensidade física": 87.66873367022774, "Disciplina": 50.74184145202796, "Nota geral": 64.79305618180636, "Ranking": 7, "Perfil": "Intensidade física"}, {"Equipe": "Suíça", "Gols": 7, "Assistências": 4, "Finalizações": 45, "Finalizações certas": 18, "Conversão finalizações (%)": 16, "GE": 6.67, "Escanteios": 19, "Posse de bola (%)": 55, "Passes": 1663, "Precisão passes (%)": 88, "Tentativas ruptura defensiva": 76, "Precisão rupturas (%)": 54, "Tentativas mudança direção": 21, "Precisão mudanças direção (%)": 90, "Gols contra": 1, "Gols sofridos": 3, "Perdas forçadas": 137, "Tempo recuperação bola (s)": 36.08, "Pressões defensivas": 615, "Pressões defensivas com êxito": 123, "Jogos sem sofrer gols": 0, "Faltas cometidas": 37, "Faltas sofridas": 42, "Cartões amarelos": 3, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 5, "Velocidade média (km/h)": 6, "Corridas alta velocidade": 4041, "Arrancadas": 1348, "Distância total (m)": 334171.2, "Ataque": 64.37224372564168, "Controle": 72.7146518489802, "Defesa": 51.468793127476815, "Intensidade física": 74.52525081559858, "Disciplina": 59.04443078044226, "Nota geral": 63.80503246974176, "Ranking": 8, "Perfil": "Intensidade física"}, {"Equipe": "Brasil", "Gols": 7, "Assistências": 6, "Finalizações": 40, "Finalizações certas": 18, "Conversão finalizações (%)": 18, "GE": 6.19, "Escanteios": 16, "Posse de bola (%)": 49, "Passes": 1680, "Precisão passes (%)": 90, "Tentativas ruptura defensiva": 59, "Precisão rupturas (%)": 56, "Tentativas mudança direção": 11, "Precisão mudanças direção (%)": 91, "Gols contra": 0, "Gols sofridos": 1, "Perdas forçadas": 108, "Tempo recuperação bola (s)": 54.19, "Pressões defensivas": 737, "Pressões defensivas com êxito": 110, "Jogos sem sofrer gols": 2, "Faltas cometidas": 40, "Faltas sofridas": 38, "Cartões amarelos": 5, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 9, "Velocidade média (km/h)": 5.98, "Corridas alta velocidade": 3727, "Arrancadas": 1314, "Distância total (m)": 337977.79, "Ataque": 65.1146092906231, "Controle": 63.301135845911965, "Defesa": 61.55055878872469, "Intensidade física": 69.94686058734439, "Disciplina": 45.5466739541345, "Nota geral": 62.6289461370656, "Ranking": 9, "Perfil": "Intensidade física"}, {"Equipe": "Marrocos", "Gols": 6, "Assistências": 5, "Finalizações": 48, "Finalizações certas": 16, "Conversão finalizações (%)": 13, "GE": 4.25, "Escanteios": 16, "Posse de bola (%)": 53, "Passes": 1736, "Precisão passes (%)": 89, "Tentativas ruptura defensiva": 59, "Precisão rupturas (%)": 54, "Tentativas mudança direção": 17, "Precisão mudanças direção (%)": 82, "Gols contra": 1, "Gols sofridos": 3, "Perdas forçadas": 128, "Tempo recuperação bola (s)": 45.43, "Pressões defensivas": 717, "Pressões defensivas com êxito": 154, "Jogos sem sofrer gols": 1, "Faltas cometidas": 32, "Faltas sofridas": 44, "Cartões amarelos": 2, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 6, "Velocidade média (km/h)": 6.04, "Corridas alta velocidade": 3893, "Arrancadas": 1511, "Distância total (m)": 341436.77, "Ataque": 55.50631129121715, "Controle": 64.67166415673879, "Defesa": 57.101843816034815, "Intensidade física": 80.60362477113975, "Disciplina": 63.64464484980984, "Nota geral": 62.316695373373555, "Ranking": 10, "Perfil": "Intensidade física"}, {"Equipe": "Holanda", "Gols": 10, "Assistências": 9, "Finalizações": 40, "Finalizações certas": 20, "Conversão finalizações (%)": 25, "GE": 4.66, "Escanteios": 13, "Posse de bola (%)": 56, "Passes": 1644, "Precisão passes (%)": 91, "Tentativas ruptura defensiva": 67, "Precisão rupturas (%)": 64, "Tentativas mudança direção": 7, "Precisão mudanças direção (%)": 86, "Gols contra": 0, "Gols sofridos": 4, "Perdas forçadas": 114, "Tempo recuperação bola (s)": 41.76, "Pressões defensivas": 599, "Pressões defensivas com êxito": 100, "Jogos sem sofrer gols": 0, "Faltas cometidas": 26, "Faltas sofridas": 28, "Cartões amarelos": 3, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 5, "Velocidade média (km/h)": 5.84, "Corridas alta velocidade": 3279, "Arrancadas": 1179, "Distância total (m)": 318131.28, "Ataque": 74.75479366764958, "Controle": 66.9401253804239, "Defesa": 49.410231739840206, "Intensidade física": 52.71400534834987, "Disciplina": 56.653230397850194, "Nota geral": 61.73944495337721, "Ranking": 11, "Perfil": "Ataque"}, {"Equipe": "Egito", "Gols": 5, "Assistências": 5, "Finalizações": 48, "Finalizações certas": 13, "Conversão finalizações (%)": 10, "GE": 3.76, "Escanteios": 18, "Posse de bola (%)": 47, "Passes": 1543, "Precisão passes (%)": 87, "Tentativas ruptura defensiva": 72, "Precisão rupturas (%)": 49, "Tentativas mudança direção": 23, "Precisão mudanças direção (%)": 96, "Gols contra": 1, "Gols sofridos": 3, "Perdas forçadas": 155, "Tempo recuperação bola (s)": 43.68, "Pressões defensivas": 676, "Pressões defensivas com êxito": 143, "Jogos sem sofrer gols": 0, "Faltas cometidas": 34, "Faltas sofridas": 42, "Cartões amarelos": 6, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 1, "Velocidade média (km/h)": 6.14, "Corridas alta velocidade": 4068, "Arrancadas": 1515, "Distância total (m)": 346823.8, "Ataque": 50.06874060596844, "Controle": 68.17491629431927, "Defesa": 55.28640377075909, "Intensidade física": 86.85104785179325, "Disciplina": 56.692514404135636, "Nota geral": 61.174115001526715, "Ranking": 12, "Perfil": "Intensidade física"}, {"Equipe": "Turquia", "Gols": 3, "Assistências": 2, "Finalizações": 70, "Finalizações certas": 14, "Conversão finalizações (%)": 4, "GE": 5.5, "Escanteios": 22, "Posse de bola (%)": 58, "Passes": 1844, "Precisão passes (%)": 87, "Tentativas ruptura defensiva": 75, "Precisão rupturas (%)": 60, "Tentativas mudança direção": 30, "Precisão mudanças direção (%)": 73, "Gols contra": 0, "Gols sofridos": 5, "Perdas forçadas": 121, "Tempo recuperação bola (s)": 29.94, "Pressões defensivas": 490, "Pressões defensivas com êxito": 123, "Jogos sem sofrer gols": 0, "Faltas cometidas": 31, "Faltas sofridas": 38, "Cartões amarelos": 2, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 7, "Velocidade média (km/h)": 6.1, "Corridas alta velocidade": 3548, "Arrancadas": 1289, "Distância total (m)": 350818.34, "Ataque": 50.59895689190721, "Controle": 75.9456157441232, "Defesa": 53.02428402140425, "Intensidade física": 73.25260510055821, "Disciplina": 59.919496253786065, "Nota geral": 60.604721612210206, "Ranking": 13, "Perfil": "Controle"}, {"Equipe": "México", "Gols": 6, "Assistências": 5, "Finalizações": 35, "Finalizações certas": 13, "Conversão finalizações (%)": 17, "GE": 4.22, "Escanteios": 4, "Posse de bola (%)": 48, "Passes": 1373, "Precisão passes (%)": 87, "Tentativas ruptura defensiva": 52, "Precisão rupturas (%)": 37, "Tentativas mudança direção": 15, "Precisão mudanças direção (%)": 87, "Gols contra": 0, "Gols sofridos": 0, "Perdas forçadas": 112, "Tempo recuperação bola (s)": 43.94, "Pressões defensivas": 668, "Pressões defensivas com êxito": 88, "Jogos sem sofrer gols": 3, "Faltas cometidas": 34, "Faltas sofridas": 28, "Cartões amarelos": 2, "Cartões vermelhos": 1, "Cartões vermelhos indiretos": 0, "Impedimentos": 4, "Velocidade média (km/h)": 6.14, "Corridas alta velocidade": 3979, "Arrancadas": 1318, "Distância total (m)": 338511.84, "Ataque": 47.25561233783333, "Controle": 51.77982879475417, "Defesa": 67.65308300012465, "Intensidade física": 78.16912643535608, "Disciplina": 49.036118512445626, "Nota geral": 58.074901026879964, "Ranking": 14, "Perfil": "Intensidade física"}, {"Equipe": "Noruega", "Gols": 8, "Assistências": 5, "Finalizações": 34, "Finalizações certas": 17, "Conversão finalizações (%)": 24, "GE": 5.36, "Escanteios": 14, "Posse de bola (%)": 46, "Passes": 1357, "Precisão passes (%)": 85, "Tentativas ruptura defensiva": 55, "Precisão rupturas (%)": 45, "Tentativas mudança direção": 12, "Precisão mudanças direção (%)": 67, "Gols contra": 0, "Gols sofridos": 7, "Perdas forçadas": 101, "Tempo recuperação bola (s)": 48.43, "Pressões defensivas": 694, "Pressões defensivas com êxito": 110, "Jogos sem sofrer gols": 0, "Faltas cometidas": 35, "Faltas sofridas": 25, "Cartões amarelos": 1, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 1, "Velocidade média (km/h)": 6.21, "Corridas alta velocidade": 4023, "Arrancadas": 1389, "Distância total (m)": 350038.61, "Ataque": 63.431872593167824, "Controle": 43.921842668111324, "Defesa": 44.635087453956636, "Intensidade física": 85.16535710699995, "Disciplina": 61.841565894650536, "Nota geral": 57.93166233057681, "Ranking": 15, "Perfil": "Intensidade física"}, {"Equipe": "Equador", "Gols": 2, "Assistências": 2, "Finalizações": 46, "Finalizações certas": 19, "Conversão finalizações (%)": 4, "GE": 5.41, "Escanteios": 17, "Posse de bola (%)": 52, "Passes": 1565, "Precisão passes (%)": 87, "Tentativas ruptura defensiva": 74, "Precisão rupturas (%)": 46, "Tentativas mudança direção": 6, "Precisão mudanças direção (%)": 83, "Gols contra": 0, "Gols sofridos": 2, "Perdas forçadas": 141, "Tempo recuperação bola (s)": 41.94, "Pressões defensivas": 734, "Pressões defensivas com êxito": 168, "Jogos sem sofrer gols": 1, "Faltas cometidas": 35, "Faltas sofridas": 27, "Cartões amarelos": 5, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 1, "Velocidade média (km/h)": 5.79, "Corridas alta velocidade": 3490, "Arrancadas": 1336, "Distância total (m)": 321972.91, "Ataque": 44.75767599175202, "Controle": 56.18222242102839, "Defesa": 70.30473656326616, "Intensidade física": 59.094194091256284, "Disciplina": 51.71084694040218, "Nota geral": 56.275145230276486, "Ranking": 16, "Perfil": "Defesa"}, {"Equipe": "Uruguai", "Gols": 3, "Assistências": 1, "Finalizações": 49, "Finalizações certas": 13, "Conversão finalizações (%)": 6, "GE": 3.95, "Escanteios": 26, "Posse de bola (%)": 51, "Passes": 1445, "Precisão passes (%)": 87, "Tentativas ruptura defensiva": 74, "Precisão rupturas (%)": 64, "Tentativas mudança direção": 19, "Precisão mudanças direção (%)": 95, "Gols contra": 0, "Gols sofridos": 4, "Perdas forçadas": 133, "Tempo recuperação bola (s)": 40.21, "Pressões defensivas": 745, "Pressões defensivas com êxito": 130, "Jogos sem sofrer gols": 0, "Faltas cometidas": 31, "Faltas sofridas": 29, "Cartões amarelos": 5, "Cartões vermelhos": 1, "Cartões vermelhos indiretos": 0, "Impedimentos": 14, "Velocidade média (km/h)": 5.88, "Corridas alta velocidade": 3668, "Arrancadas": 1448, "Distância total (m)": 337450.99, "Ataque": 42.78215276971812, "Controle": 71.15075637463697, "Defesa": 58.8188100633891, "Intensidade física": 70.21433863796857, "Disciplina": 30.507731547903717, "Nota geral": 55.35242357217576, "Ranking": 17, "Perfil": "Controle"}, {"Equipe": "Costa do Marfim", "Gols": 4, "Assistências": 3, "Finalizações": 31, "Finalizações certas": 9, "Conversão finalizações (%)": 13, "GE": 4.08, "Escanteios": 12, "Posse de bola (%)": 46, "Passes": 1564, "Precisão passes (%)": 88, "Tentativas ruptura defensiva": 57, "Precisão rupturas (%)": 51, "Tentativas mudança direção": 6, "Precisão mudanças direção (%)": 100, "Gols contra": 0, "Gols sofridos": 2, "Perdas forçadas": 131, "Tempo recuperação bola (s)": 53.33, "Pressões defensivas": 805, "Pressões defensivas com êxito": 131, "Jogos sem sofrer gols": 2, "Faltas cometidas": 23, "Faltas sofridas": 29, "Cartões amarelos": 4, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 2, "Velocidade média (km/h)": 5.85, "Corridas alta velocidade": 3518, "Arrancadas": 1278, "Distância total (m)": 329162.16, "Ataque": 38.38575904124298, "Controle": 57.5813746783896, "Defesa": 67.7569996896335, "Intensidade física": 60.74123961060241, "Disciplina": 59.15658946505432, "Nota geral": 54.99809745855498, "Ranking": 18, "Perfil": "Defesa"}, {"Equipe": "Inglaterra", "Gols": 5, "Assistências": 4, "Finalizações": 53, "Finalizações certas": 18, "Conversão finalizações (%)": 9, "GE": 5.62, "Escanteios": 23, "Posse de bola (%)": 59, "Passes": 1540, "Precisão passes (%)": 90, "Tentativas ruptura defensiva": 45, "Precisão rupturas (%)": 60, "Tentativas mudança direção": 9, "Precisão mudanças direção (%)": 67, "Gols contra": 0, "Gols sofridos": 2, "Perdas forçadas": 81, "Tempo recuperação bola (s)": 38.15, "Pressões defensivas": 367, "Pressões defensivas com êxito": 77, "Jogos sem sofrer gols": 2, "Faltas cometidas": 30, "Faltas sofridas": 48, "Cartões amarelos": 2, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 5, "Velocidade média (km/h)": 6.14, "Corridas alta velocidade": 2519, "Arrancadas": 929, "Distância total (m)": 304265.6, "Ataque": 58.952103629563915, "Controle": 55.51722821125806, "Defesa": 50.20014484338794, "Intensidade física": 43.656281271913116, "Disciplina": 67.60891348409282, "Nota geral": 54.648446481164015, "Ranking": 19, "Perfil": "Disciplina"}, {"Equipe": "Japão", "Gols": 7, "Assistências": 7, "Finalizações": 27, "Finalizações certas": 9, "Conversão finalizações (%)": 26, "GE": 2.92, "Escanteios": 11, "Posse de bola (%)": 46, "Passes": 1403, "Precisão passes (%)": 87, "Tentativas ruptura defensiva": 58, "Precisão rupturas (%)": 52, "Tentativas mudança direção": 6, "Precisão mudanças direção (%)": 67, "Gols contra": 0, "Gols sofridos": 3, "Perdas forçadas": 105, "Tempo recuperação bola (s)": 54.62, "Pressões defensivas": 756, "Pressões defensivas com êxito": 143, "Jogos sem sofrer gols": 1, "Faltas cometidas": 42, "Faltas sofridas": 27, "Cartões amarelos": 1, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 4, "Velocidade média (km/h)": 6.02, "Corridas alta velocidade": 3488, "Arrancadas": 1245, "Distância total (m)": 331862.15, "Ataque": 52.22863161527324, "Controle": 45.14858441724113, "Defesa": 57.47085071852424, "Intensidade física": 65.33930286166546, "Disciplina": 56.405001024800164, "Nota geral": 54.507414579391096, "Ranking": 20, "Perfil": "Intensidade física"}, {"Equipe": "Suécia", "Gols": 7, "Assistências": 6, "Finalizações": 40, "Finalizações certas": 20, "Conversão finalizações (%)": 18, "GE": 3.95, "Escanteios": 17, "Posse de bola (%)": 45, "Passes": 1204, "Precisão passes (%)": 83, "Tentativas ruptura defensiva": 51, "Precisão rupturas (%)": 55, "Tentativas mudança direção": 11, "Precisão mudanças direção (%)": 91, "Gols contra": 0, "Gols sofridos": 7, "Perdas forçadas": 116, "Tempo recuperação bola (s)": 52.16, "Pressões defensivas": 601, "Pressões defensivas com êxito": 108, "Jogos sem sofrer gols": 0, "Faltas cometidas": 33, "Faltas sofridas": 37, "Cartões amarelos": 5, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 8, "Velocidade média (km/h)": 5.99, "Corridas alta velocidade": 3440, "Arrancadas": 1240, "Distância total (m)": 332530.74, "Ataque": 62.02252078057792, "Controle": 49.741166793405604, "Defesa": 43.87877619336642, "Intensidade física": 63.78579194039784, "Disciplina": 49.092482521463864, "Nota geral": 54.00180068440217, "Ranking": 21, "Perfil": "Intensidade física"}, {"Equipe": "República da Coreia", "Gols": 2, "Assistências": 2, "Finalizações": 32, "Finalizações certas": 11, "Conversão finalizações (%)": 6, "GE": 3.38, "Escanteios": 12, "Posse de bola (%)": 56, "Passes": 1853, "Precisão passes (%)": 89, "Tentativas ruptura defensiva": 65, "Precisão rupturas (%)": 60, "Tentativas mudança direção": 21, "Precisão mudanças direção (%)": 86, "Gols contra": 0, "Gols sofridos": 3, "Perdas forçadas": 106, "Tempo recuperação bola (s)": 44.64, "Pressões defensivas": 563, "Pressões defensivas com êxito": 86, "Jogos sem sofrer gols": 0, "Faltas cometidas": 25, "Faltas sofridas": 32, "Cartões amarelos": 4, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 8, "Velocidade média (km/h)": 6.09, "Corridas alta velocidade": 3553, "Arrancadas": 1298, "Distância total (m)": 334954.79, "Ataque": 30.20993660058777, "Controle": 73.62719370182057, "Defesa": 46.33972894780601, "Intensidade física": 70.55210217475188, "Disciplina": 52.67131242740999, "Nota geral": 51.22329852644573, "Ranking": 22, "Perfil": "Controle"}, {"Equipe": "Nova Zelândia", "Gols": 4, "Assistências": 3, "Finalizações": 31, "Finalizações certas": 15, "Conversão finalizações (%)": 13, "GE": 2.48, "Escanteios": 10, "Posse de bola (%)": 42, "Passes": 1335, "Precisão passes (%)": 83, "Tentativas ruptura defensiva": 54, "Precisão rupturas (%)": 22, "Tentativas mudança direção": 8, "Precisão mudanças direção (%)": 75, "Gols contra": 0, "Gols sofridos": 10, "Perdas forçadas": 118, "Tempo recuperação bola (s)": 47.94, "Pressões defensivas": 844, "Pressões defensivas com êxito": 140, "Jogos sem sofrer gols": 0, "Faltas cometidas": 32, "Faltas sofridas": 23, "Cartões amarelos": 4, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 4, "Velocidade média (km/h)": 6.22, "Corridas alta velocidade": 4280, "Arrancadas": 1492, "Distância total (m)": 349040.82, "Ataque": 38.26741505292995, "Controle": 33.927967554833224, "Defesa": 49.91258135799543, "Intensidade física": 91.45963513302299, "Disciplina": 50.17592402814785, "Nota geral": 49.48050103911272, "Ranking": 23, "Perfil": "Intensidade física"}, {"Equipe": "RI do Irã", "Gols": 3, "Assistências": 1, "Finalizações": 37, "Finalizações certas": 10, "Conversão finalizações (%)": 8, "GE": 4.57, "Escanteios": 8, "Posse de bola (%)": 37, "Passes": 1051, "Precisão passes (%)": 77, "Tentativas ruptura defensiva": 50, "Precisão rupturas (%)": 46, "Tentativas mudança direção": 14, "Precisão mudanças direção (%)": 79, "Gols contra": 0, "Gols sofridos": 3, "Perdas forçadas": 132, "Tempo recuperação bola (s)": 47.85, "Pressões defensivas": 874, "Pressões defensivas com êxito": 148, "Jogos sem sofrer gols": 1, "Faltas cometidas": 35, "Faltas sofridas": 23, "Cartões amarelos": 6, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 9, "Velocidade média (km/h)": 6.08, "Corridas alta velocidade": 4061, "Arrancadas": 1347, "Distância total (m)": 344366.12, "Ataque": 32.50675922959332, "Controle": 35.1837565419655, "Defesa": 66.67644881891917, "Intensidade física": 79.06040294567954, "Disciplina": 37.44847532508939, "Nota geral": 49.06179925636176, "Ranking": 24, "Perfil": "Intensidade física"}, {"Equipe": "Bósnia e Herzegovina", "Gols": 5, "Assistências": 3, "Finalizações": 27, "Finalizações certas": 11, "Conversão finalizações (%)": 19, "GE": 1.83, "Escanteios": 12, "Posse de bola (%)": 38, "Passes": 1159, "Precisão passes (%)": 81, "Tentativas ruptura defensiva": 44, "Precisão rupturas (%)": 41, "Tentativas mudança direção": 10, "Precisão mudanças direção (%)": 80, "Gols contra": 0, "Gols sofridos": 6, "Perdas forçadas": 136, "Tempo recuperação bola (s)": 44.99, "Pressões defensivas": 790, "Pressões defensivas com êxito": 124, "Jogos sem sofrer gols": 0, "Faltas cometidas": 46, "Faltas sofridas": 31, "Cartões amarelos": 6, "Cartões vermelhos": 1, "Cartões vermelhos indiretos": 0, "Impedimentos": 2, "Velocidade média (km/h)": 6.12, "Corridas alta velocidade": 3592, "Arrancadas": 1283, "Distância total (m)": 336456.49, "Ataque": 38.62716256488778, "Controle": 35.0424567140985, "Defesa": 55.77888383629882, "Intensidade física": 71.74099272618933, "Disciplina": 36.89849923709321, "Nota geral": 46.99235990399846, "Ranking": 25, "Perfil": "Intensidade física"}, {"Equipe": "Tchéquia", "Gols": 2, "Assistências": 2, "Finalizações": 34, "Finalizações certas": 8, "Conversão finalizações (%)": 6, "GE": 2.44, "Escanteios": 15, "Posse de bola (%)": 37, "Passes": 1102, "Precisão passes (%)": 79, "Tentativas ruptura defensiva": 45, "Precisão rupturas (%)": 38, "Tentativas mudança direção": 12, "Precisão mudanças direção (%)": 75, "Gols contra": 0, "Gols sofridos": 6, "Perdas forçadas": 119, "Tempo recuperação bola (s)": 56.67, "Pressões defensivas": 857, "Pressões defensivas com êxito": 121, "Jogos sem sofrer gols": 0, "Faltas cometidas": 37, "Faltas sofridas": 31, "Cartões amarelos": 1, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 5, "Velocidade média (km/h)": 6.33, "Corridas alta velocidade": 4330, "Arrancadas": 1381, "Distância total (m)": 348826.43, "Ataque": 27.75543860404034, "Controle": 31.397975987528223, "Defesa": 50.57588675234693, "Intensidade física": 92.0210884207345, "Disciplina": 59.20782947325272, "Nota geral": 46.97414467723993, "Ranking": 26, "Perfil": "Intensidade física"}, {"Equipe": "Portugal", "Gols": 6, "Assistências": 3, "Finalizações": 24, "Finalizações certas": 10, "Conversão finalizações (%)": 25, "GE": 2.6, "Escanteios": 8, "Posse de bola (%)": 62, "Passes": 1443, "Precisão passes (%)": 91, "Tentativas ruptura defensiva": 60, "Precisão rupturas (%)": 62, "Tentativas mudança direção": 18, "Precisão mudanças direção (%)": 78, "Gols contra": 0, "Gols sofridos": 1, "Perdas forçadas": 66, "Tempo recuperação bola (s)": 22.69, "Pressões defensivas": 380, "Pressões defensivas com êxito": 67, "Jogos sem sofrer gols": 1, "Faltas cometidas": 23, "Faltas sofridas": 22, "Cartões amarelos": 4, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 5, "Velocidade média (km/h)": 5.95, "Corridas alta velocidade": 2399, "Arrancadas": 917, "Distância total (m)": 219980.05, "Ataque": 41.90676010957186, "Controle": 69.33023527053378, "Defesa": 48.11785436785436, "Intensidade física": 21.3280896388095, "Disciplina": 52.153788344606134, "Nota geral": 46.88213095922395, "Ranking": 27, "Perfil": "Controle"}, {"Equipe": "Austrália", "Gols": 2, "Assistências": 1, "Finalizações": 26, "Finalizações certas": 11, "Conversão finalizações (%)": 8, "GE": 1.99, "Escanteios": 12, "Posse de bola (%)": 35, "Passes": 1127, "Precisão passes (%)": 81, "Tentativas ruptura defensiva": 50, "Precisão rupturas (%)": 50, "Tentativas mudança direção": 16, "Precisão mudanças direção (%)": 56, "Gols contra": 1, "Gols sofridos": 2, "Perdas forçadas": 118, "Tempo recuperação bola (s)": 52.57, "Pressões defensivas": 856, "Pressões defensivas com êxito": 130, "Jogos sem sofrer gols": 2, "Faltas cometidas": 34, "Faltas sofridas": 24, "Cartões amarelos": 5, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 1, "Velocidade média (km/h)": 6.15, "Corridas alta velocidade": 4023, "Arrancadas": 1375, "Distância total (m)": 345911.08, "Ataque": 25.2425227639662, "Controle": 32.985936120264476, "Defesa": 59.667465281295996, "Intensidade física": 82.06486518489348, "Disciplina": 50.64676277014871, "Nota geral": 46.46121642831565, "Ranking": 28, "Perfil": "Intensidade física"}, {"Equipe": "Croácia", "Gols": 4, "Assistências": 4, "Finalizações": 21, "Finalizações certas": 9, "Conversão finalizações (%)": 19, "GE": 1.97, "Escanteios": 4, "Posse de bola (%)": 47, "Passes": 1357, "Precisão passes (%)": 87, "Tentativas ruptura defensiva": 47, "Precisão rupturas (%)": 51, "Tentativas mudança direção": 10, "Precisão mudanças direção (%)": 70, "Gols contra": 0, "Gols sofridos": 4, "Perdas forçadas": 89, "Tempo recuperação bola (s)": 50.06, "Pressões defensivas": 531, "Pressões defensivas com êxito": 101, "Jogos sem sofrer gols": 2, "Faltas cometidas": 28, "Faltas sofridas": 36, "Cartões amarelos": 1, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 3, "Velocidade média (km/h)": 6.25, "Corridas alta velocidade": 2597, "Arrancadas": 995, "Distância total (m)": 299903.9, "Ataque": 32.798563130238506, "Controle": 45.72925747552613, "Defesa": 51.18194372185473, "Intensidade física": 49.44905143155526, "Disciplina": 67.69829883172781, "Nota geral": 45.968093962546526, "Ranking": 29, "Perfil": "Disciplina"}, {"Equipe": "Cabo Verde", "Gols": 2, "Assistências": 0, "Finalizações": 33, "Finalizações certas": 7, "Conversão finalizações (%)": 6, "GE": 2.04, "Escanteios": 9, "Posse de bola (%)": 36, "Passes": 1064, "Precisão passes (%)": 80, "Tentativas ruptura defensiva": 44, "Precisão rupturas (%)": 34, "Tentativas mudança direção": 17, "Precisão mudanças direção (%)": 65, "Gols contra": 0, "Gols sofridos": 2, "Perdas forçadas": 146, "Tempo recuperação bola (s)": 51.37, "Pressões defensivas": 837, "Pressões defensivas com êxito": 117, "Jogos sem sofrer gols": 2, "Faltas cometidas": 15, "Faltas sofridas": 35, "Cartões amarelos": 4, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 5, "Velocidade média (km/h)": 5.97, "Corridas alta velocidade": 3419, "Arrancadas": 1207, "Distância total (m)": 335193.42, "Ataque": 20.150390728221513, "Controle": 29.668880870373407, "Defesa": 69.98901182108361, "Intensidade física": 62.30894398449699, "Disciplina": 61.77836988453918, "Nota geral": 45.000324933940504, "Ranking": 30, "Perfil": "Defesa"}, {"Equipe": "África do Sul", "Gols": 2, "Assistências": 1, "Finalizações": 33, "Finalizações certas": 10, "Conversão finalizações (%)": 6, "GE": 2.33, "Escanteios": 10, "Posse de bola (%)": 42, "Passes": 1280, "Precisão passes (%)": 85, "Tentativas ruptura defensiva": 38, "Precisão rupturas (%)": 34, "Tentativas mudança direção": 19, "Precisão mudanças direção (%)": 89, "Gols contra": 0, "Gols sofridos": 3, "Perdas forçadas": 116, "Tempo recuperação bola (s)": 59.01, "Pressões defensivas": 860, "Pressões defensivas com êxito": 123, "Jogos sem sofrer gols": 1, "Faltas cometidas": 28, "Faltas sofridas": 30, "Cartões amarelos": 5, "Cartões vermelhos": 2, "Cartões vermelhos indiretos": 0, "Impedimentos": 7, "Velocidade média (km/h)": 5.89, "Corridas alta velocidade": 3714, "Arrancadas": 1359, "Distância total (m)": 320890.67, "Ataque": 24.954759046521723, "Controle": 45.7698975982558, "Defesa": 57.98501720374435, "Intensidade física": 65.38374144884101, "Disciplina": 32.21743982145704, "Nota geral": 44.16596673401562, "Ranking": 31, "Perfil": "Intensidade física"}, {"Equipe": "Escócia", "Gols": 1, "Assistências": 0, "Finalizações": 29, "Finalizações certas": 7, "Conversão finalizações (%)": 3, "GE": 2.34, "Escanteios": 12, "Posse de bola (%)": 41, "Passes": 1377, "Precisão passes (%)": 87, "Tentativas ruptura defensiva": 45, "Precisão rupturas (%)": 40, "Tentativas mudança direção": 17, "Precisão mudanças direção (%)": 71, "Gols contra": 0, "Gols sofridos": 4, "Perdas forçadas": 107, "Tempo recuperação bola (s)": 70.31, "Pressões defensivas": 775, "Pressões defensivas com êxito": 109, "Jogos sem sofrer gols": 1, "Faltas cometidas": 42, "Faltas sofridas": 39, "Cartões amarelos": 5, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 2, "Velocidade média (km/h)": 6.21, "Corridas alta velocidade": 3766, "Arrancadas": 1251, "Distância total (m)": 348567.52, "Ataque": 18.09882406415929, "Controle": 44.051795633885185, "Defesa": 48.874876683865445, "Intensidade física": 77.65954301873538, "Disciplina": 53.55719523581791, "Nota geral": 43.46337649338329, "Ranking": 32, "Perfil": "Intensidade física"}, {"Equipe": "Haiti", "Gols": 2, "Assistências": 1, "Finalizações": 31, "Finalizações certas": 7, "Conversão finalizações (%)": 6, "GE": 1.64, "Escanteios": 9, "Posse de bola (%)": 42, "Passes": 1098, "Precisão passes (%)": 85, "Tentativas ruptura defensiva": 42, "Precisão rupturas (%)": 40, "Tentativas mudança direção": 13, "Precisão mudanças direção (%)": 100, "Gols contra": 0, "Gols sofridos": 8, "Perdas forçadas": 113, "Tempo recuperação bola (s)": 49.18, "Pressões defensivas": 810, "Pressões defensivas com êxito": 143, "Jogos sem sofrer gols": 0, "Faltas cometidas": 55, "Faltas sofridas": 43, "Cartões amarelos": 6, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 7, "Velocidade média (km/h)": 5.96, "Corridas alta velocidade": 3975, "Arrancadas": 1376, "Distância total (m)": 334085.63, "Ataque": 20.384743888525037, "Controle": 46.88924591163397, "Defesa": 50.74407008559758, "Intensidade física": 73.36685257921135, "Disciplina": 41.50326797385621, "Nota geral": 43.334644554551026, "Ranking": 33, "Perfil": "Intensidade física"}, {"Equipe": "Argélia", "Gols": 2, "Assistências": 1, "Finalizações": 24, "Finalizações certas": 9, "Conversão finalizações (%)": 8, "GE": 2.46, "Escanteios": 12, "Posse de bola (%)": 56, "Passes": 1295, "Precisão passes (%)": 90, "Tentativas ruptura defensiva": 44, "Precisão rupturas (%)": 59, "Tentativas mudança direção": 12, "Precisão mudanças direção (%)": 92, "Gols contra": 0, "Gols sofridos": 4, "Perdas forçadas": 95, "Tempo recuperação bola (s)": 29.3, "Pressões defensivas": 531, "Pressões defensivas com êxito": 85, "Jogos sem sofrer gols": 0, "Faltas cometidas": 14, "Faltas sofridas": 24, "Cartões amarelos": 1, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 1, "Velocidade média (km/h)": 6.06, "Corridas alta velocidade": 2640, "Arrancadas": 909, "Distância total (m)": 225608.63, "Ataque": 24.38493037411984, "Controle": 61.367584322808206, "Defesa": 47.250689904093015, "Intensidade física": 28.295514042589033, "Disciplina": 69.88795518207284, "Nota geral": 42.63479107741649, "Ranking": 34, "Perfil": "Disciplina"}, {"Equipe": "Paraguai", "Gols": 2, "Assistências": 2, "Finalizações": 23, "Finalizações certas": 5, "Conversão finalizações (%)": 9, "GE": 1.25, "Escanteios": 2, "Posse de bola (%)": 30, "Passes": 905, "Precisão passes (%)": 74, "Tentativas ruptura defensiva": 29, "Precisão rupturas (%)": 31, "Tentativas mudança direção": 13, "Precisão mudanças direção (%)": 77, "Gols contra": 1, "Gols sofridos": 4, "Perdas forçadas": 150, "Tempo recuperação bola (s)": 48.2, "Pressões defensivas": 1011, "Pressões defensivas com êxito": 206, "Jogos sem sofrer gols": 2, "Faltas cometidas": 41, "Faltas sofridas": 33, "Cartões amarelos": 7, "Cartões vermelhos": 1, "Cartões vermelhos indiretos": 0, "Impedimentos": 4, "Velocidade média (km/h)": 6.09, "Corridas alta velocidade": 3907, "Arrancadas": 1361, "Distância total (m)": 344337.97, "Ataque": 16.42553612228281, "Controle": 18.35353701025343, "Defesa": 74.40172769578317, "Intensidade física": 78.10909692277478, "Disciplina": 34.752681560429046, "Nota geral": 42.39043285714044, "Ranking": 35, "Perfil": "Intensidade física"}, {"Equipe": "Arábia Saudita", "Gols": 1, "Assistências": 0, "Finalizações": 17, "Finalizações certas": 8, "Conversão finalizações (%)": 6, "GE": 1.52, "Escanteios": 7, "Posse de bola (%)": 33, "Passes": 1175, "Precisão passes (%)": 78, "Tentativas ruptura defensiva": 53, "Precisão rupturas (%)": 40, "Tentativas mudança direção": 12, "Precisão mudanças direção (%)": 67, "Gols contra": 1, "Gols sofridos": 5, "Perdas forçadas": 128, "Tempo recuperação bola (s)": 53.18, "Pressões defensivas": 1035, "Pressões defensivas com êxito": 140, "Jogos sem sofrer gols": 1, "Faltas cometidas": 29, "Faltas sofridas": 26, "Cartões amarelos": 6, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 3, "Velocidade média (km/h)": 6.02, "Corridas alta velocidade": 4110, "Arrancadas": 1450, "Distância total (m)": 338484.3, "Ataque": 13.673297890929723, "Controle": 29.253534193832703, "Defesa": 57.30686034507487, "Intensidade física": 79.92687562562298, "Disciplina": 48.500945093484546, "Nota geral": 41.11853714550607, "Ranking": 36, "Perfil": "Intensidade física"}, {"Equipe": "Argentina", "Gols": 5, "Assistências": 3, "Finalizações": 22, "Finalizações certas": 11, "Conversão finalizações (%)": 23, "GE": 4.03, "Escanteios": 3, "Posse de bola (%)": 46, "Passes": 1142, "Precisão passes (%)": 90, "Tentativas ruptura defensiva": 24, "Precisão rupturas (%)": 58, "Tentativas mudança direção": 7, "Precisão mudanças direção (%)": 71, "Gols contra": 0, "Gols sofridos": 0, "Perdas forçadas": 87, "Tempo recuperação bola (s)": 38.35, "Pressões defensivas": 517, "Pressões defensivas com êxito": 92, "Jogos sem sofrer gols": 2, "Faltas cometidas": 26, "Faltas sofridas": 19, "Cartões amarelos": 2, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 5, "Velocidade média (km/h)": 5.67, "Corridas alta velocidade": 2145, "Arrancadas": 732, "Distância total (m)": 212754.56, "Ataque": 40.62300461554382, "Controle": 41.32266158385562, "Defesa": 57.95887226096655, "Intensidade física": 2.284022702438457, "Disciplina": 55.01924346974562, "Nota geral": 40.78567951901624, "Ranking": 37, "Perfil": "Defesa"}, {"Equipe": "Colômbia", "Gols": 4, "Assistências": 4, "Finalizações": 35, "Finalizações certas": 13, "Conversão finalizações (%)": 11, "GE": 2.71, "Escanteios": 9, "Posse de bola (%)": 58, "Passes": 1082, "Precisão passes (%)": 87, "Tentativas ruptura defensiva": 41, "Precisão rupturas (%)": 32, "Tentativas mudança direção": 25, "Precisão mudanças direção (%)": 92, "Gols contra": 0, "Gols sofridos": 1, "Perdas forçadas": 71, "Tempo recuperação bola (s)": 23.85, "Pressões defensivas": 315, "Pressões defensivas com êxito": 63, "Jogos sem sofrer gols": 1, "Faltas cometidas": 23, "Faltas sofridas": 28, "Cartões amarelos": 3, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 10, "Velocidade média (km/h)": 5.6, "Corridas alta velocidade": 2239, "Arrancadas": 750, "Distância total (m)": 212688.63, "Ataque": 38.33973633217403, "Controle": 57.01505376878511, "Defesa": 46.88314660673079, "Intensidade física": 1.6202230518695993, "Disciplina": 51.92036164059119, "Nota geral": 40.06078792693149, "Ranking": 38, "Perfil": "Controle"}, {"Equipe": "Áustria", "Gols": 3, "Assistências": 1, "Finalizações": 16, "Finalizações certas": 5, "Conversão finalizações (%)": 19, "GE": 2.56, "Escanteios": 7, "Posse de bola (%)": 48, "Passes": 1062, "Precisão passes (%)": 86, "Tentativas ruptura defensiva": 44, "Precisão rupturas (%)": 61, "Tentativas mudança direção": 5, "Precisão mudanças direção (%)": 100, "Gols contra": 0, "Gols sofridos": 3, "Perdas forçadas": 85, "Tempo recuperação bola (s)": 34.57, "Pressões defensivas": 505, "Pressões defensivas com êxito": 92, "Jogos sem sofrer gols": 0, "Faltas cometidas": 25, "Faltas sofridas": 17, "Cartões amarelos": 3, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 3, "Velocidade média (km/h)": 5.91, "Corridas alta velocidade": 2627, "Arrancadas": 929, "Distância total (m)": 228141.38, "Ataque": 25.183417613250636, "Controle": 51.8286017465122, "Defesa": 45.438488960767394, "Intensidade física": 24.35054359420325, "Disciplina": 54.048529981098135, "Nota geral": 38.337802410709784, "Ranking": 39, "Perfil": "Disciplina"}, {"Equipe": "Curaçau", "Gols": 1, "Assistências": 0, "Finalizações": 29, "Finalizações certas": 7, "Conversão finalizações (%)": 3, "GE": 1.7, "Escanteios": 5, "Posse de bola (%)": 32, "Passes": 968, "Precisão passes (%)": 80, "Tentativas ruptura defensiva": 40, "Precisão rupturas (%)": 40, "Tentativas mudança direção": 7, "Precisão mudanças direção (%)": 100, "Gols contra": 0, "Gols sofridos": 9, "Perdas forçadas": 121, "Tempo recuperação bola (s)": 56.6, "Pressões defensivas": 983, "Pressões defensivas com êxito": 160, "Jogos sem sofrer gols": 1, "Faltas cometidas": 32, "Faltas sofridas": 31, "Cartões amarelos": 7, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 5, "Velocidade média (km/h)": 5.74, "Corridas alta velocidade": 3093, "Arrancadas": 1230, "Distância total (m)": 315767.46, "Ataque": 13.653218070565682, "Controle": 33.5689161584684, "Defesa": 58.504493706254834, "Intensidade física": 48.611292670024284, "Disciplina": 44.5736831317893, "Nota geral": 37.18493429310966, "Ranking": 40, "Perfil": "Defesa"}, {"Equipe": "Iraque", "Gols": 1, "Assistências": 1, "Finalizações": 21, "Finalizações certas": 2, "Conversão finalizações (%)": 5, "GE": 2.11, "Escanteios": 7, "Posse de bola (%)": 37, "Passes": 1129, "Precisão passes (%)": 81, "Tentativas ruptura defensiva": 48, "Precisão rupturas (%)": 44, "Tentativas mudança direção": 14, "Precisão mudanças direção (%)": 79, "Gols contra": 1, "Gols sofridos": 12, "Perdas forçadas": 122, "Tempo recuperação bola (s)": 61.26, "Pressões defensivas": 851, "Pressões defensivas com êxito": 155, "Jogos sem sofrer gols": 0, "Faltas cometidas": 27, "Faltas sofridas": 31, "Cartões amarelos": 4, "Cartões vermelhos": 1, "Cartões vermelhos indiretos": 0, "Impedimentos": 1, "Velocidade média (km/h)": 6.09, "Corridas alta velocidade": 3746, "Arrancadas": 1209, "Distância total (m)": 328508.46, "Ataque": 12.666935212232882, "Controle": 38.0403344582449, "Defesa": 38.67229671461677, "Intensidade física": 68.76803544631217, "Disciplina": 51.368108218897326, "Nota geral": 36.5282377728096, "Ranking": 41, "Perfil": "Intensidade física"}, {"Equipe": "Tunísia", "Gols": 2, "Assistências": 2, "Finalizações": 18, "Finalizações certas": 6, "Conversão finalizações (%)": 11, "GE": 1.12, "Escanteios": 9, "Posse de bola (%)": 36, "Passes": 1011, "Precisão passes (%)": 80, "Tentativas ruptura defensiva": 40, "Precisão rupturas (%)": 38, "Tentativas mudança direção": 21, "Precisão mudanças direção (%)": 71, "Gols contra": 1, "Gols sofridos": 12, "Perdas forçadas": 109, "Tempo recuperação bola (s)": 69.13, "Pressões defensivas": 802, "Pressões defensivas com êxito": 131, "Jogos sem sofrer gols": 0, "Faltas cometidas": 27, "Faltas sofridas": 34, "Cartões amarelos": 1, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 9, "Velocidade média (km/h)": 6.09, "Corridas alta velocidade": 3503, "Arrancadas": 1213, "Distância total (m)": 333260.77, "Ataque": 19.810582364000624, "Controle": 33.69552338209055, "Defesa": 30.854841946271527, "Intensidade física": 67.00102322024583, "Disciplina": 59.98155359704858, "Nota geral": 36.44429871492791, "Ranking": 42, "Perfil": "Intensidade física"}, {"Equipe": "Panamá", "Gols": 0, "Assistências": 0, "Finalizações": 23, "Finalizações certas": 7, "Conversão finalizações (%)": 0, "GE": 1.67, "Escanteios": 10, "Posse de bola (%)": 42, "Passes": 1142, "Precisão passes (%)": 82, "Tentativas ruptura defensiva": 35, "Precisão rupturas (%)": 51, "Tentativas mudança direção": 23, "Precisão mudanças direção (%)": 70, "Gols contra": 0, "Gols sofridos": 4, "Perdas forçadas": 118, "Tempo recuperação bola (s)": 45.3, "Pressões defensivas": 470, "Pressões defensivas com êxito": 120, "Jogos sem sofrer gols": 0, "Faltas cometidas": 42, "Faltas sofridas": 26, "Cartões amarelos": 4, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 3, "Velocidade média (km/h)": 6.06, "Corridas alta velocidade": 2501, "Arrancadas": 880, "Distância total (m)": 301871.83, "Ataque": 11.269302606916167, "Controle": 42.477617738811766, "Defesa": 48.42878574253245, "Intensidade física": 38.88961869203926, "Disciplina": 48.771947803511644, "Nota geral": 34.69414834962737, "Ranking": 43, "Perfil": "Disciplina"}, {"Equipe": "Gana", "Gols": 1, "Assistências": 1, "Finalizações": 12, "Finalizações certas": 2, "Conversão finalizações (%)": 8, "GE": 1.41, "Escanteios": 5, "Posse de bola (%)": 35, "Passes": 905, "Precisão passes (%)": 84, "Tentativas ruptura defensiva": 34, "Precisão rupturas (%)": 53, "Tentativas mudança direção": 12, "Precisão mudanças direção (%)": 92, "Gols contra": 0, "Gols sofridos": 1, "Perdas forçadas": 91, "Tempo recuperação bola (s)": 68.63, "Pressões defensivas": 592, "Pressões defensivas com êxito": 110, "Jogos sem sofrer gols": 2, "Faltas cometidas": 42, "Faltas sofridas": 28, "Cartões amarelos": 2, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 7, "Velocidade média (km/h)": 6.01, "Corridas alta velocidade": 2348, "Arrancadas": 859, "Distância total (m)": 300321.79, "Ataque": 9.79377004144806, "Controle": 40.13786379458021, "Defesa": 51.61292935779272, "Intensidade física": 34.62743778725252, "Disciplina": 50.54599075402518, "Nota geral": 34.11765085428904, "Ranking": 44, "Perfil": "Defesa"}, {"Equipe": "Jordânia", "Gols": 2, "Assistências": 2, "Finalizações": 19, "Finalizações certas": 8, "Conversão finalizações (%)": 11, "GE": 0.92, "Escanteios": 4, "Posse de bola (%)": 30, "Passes": 614, "Precisão passes (%)": 74, "Tentativas ruptura defensiva": 31, "Precisão rupturas (%)": 52, "Tentativas mudança direção": 10, "Precisão mudanças direção (%)": 80, "Gols contra": 1, "Gols sofridos": 5, "Perdas forçadas": 102, "Tempo recuperação bola (s)": 35.27, "Pressões defensivas": 677, "Pressões defensivas com êxito": 118, "Jogos sem sofrer gols": 0, "Faltas cometidas": 18, "Faltas sofridas": 16, "Cartões amarelos": 1, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 2, "Velocidade média (km/h)": 6.19, "Corridas alta velocidade": 3001, "Arrancadas": 966, "Distância total (m)": 236714.7, "Ataque": 18.86656148951231, "Controle": 21.467549863072254, "Defesa": 44.44351658918997, "Intensidade física": 40.25564223458503, "Disciplina": 63.14989410398306, "Nota geral": 33.417693312351695, "Ranking": 45, "Perfil": "Disciplina"}, {"Equipe": "Catar", "Gols": 2, "Assistências": 1, "Finalizações": 17, "Finalizações certas": 6, "Conversão finalizações (%)": 12, "GE": 1.88, "Escanteios": 9, "Posse de bola (%)": 31, "Passes": 912, "Precisão passes (%)": 78, "Tentativas ruptura defensiva": 71, "Precisão rupturas (%)": 27, "Tentativas mudança direção": 11, "Precisão mudanças direção (%)": 91, "Gols contra": 2, "Gols sofridos": 10, "Perdas forçadas": 101, "Tempo recuperação bola (s)": 60.48, "Pressões defensivas": 832, "Pressões defensivas com êxito": 122, "Jogos sem sofrer gols": 0, "Faltas cometidas": 36, "Faltas sofridas": 28, "Cartões amarelos": 4, "Cartões vermelhos": 2, "Cartões vermelhos indiretos": 0, "Impedimentos": 4, "Velocidade média (km/h)": 5.64, "Corridas alta velocidade": 3584, "Arrancadas": 1080, "Distância total (m)": 310036.75, "Ataque": 20.219211557586423, "Controle": 33.5137391629929, "Defesa": 27.099913332264247, "Intensidade física": 45.08431692405864, "Disciplina": 34.33422149347544, "Nota geral": 29.73955932089691, "Ranking": 46, "Perfil": "Intensidade física"}, {"Equipe": "RD do Congo", "Gols": 1, "Assistências": 1, "Finalizações": 15, "Finalizações certas": 3, "Conversão finalizações (%)": 7, "GE": 0.96, "Escanteios": 8, "Posse de bola (%)": 29, "Passes": 583, "Precisão passes (%)": 77, "Tentativas ruptura defensiva": 32, "Precisão rupturas (%)": 31, "Tentativas mudança direção": 8, "Precisão mudanças direção (%)": 63, "Gols contra": 0, "Gols sofridos": 2, "Perdas forçadas": 82, "Tempo recuperação bola (s)": 52.31, "Pressões defensivas": 707, "Pressões defensivas com êxito": 88, "Jogos sem sofrer gols": 0, "Faltas cometidas": 26, "Faltas sofridas": 20, "Cartões amarelos": 2, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 2, "Velocidade média (km/h)": 5.91, "Corridas alta velocidade": 2445, "Arrancadas": 866, "Distância total (m)": 218417.03, "Ataque": 10.964747721333014, "Controle": 10.697635697635699, "Defesa": 44.4338667664718, "Intensidade física": 18.65217338395573, "Disciplina": 59.08086811960556, "Nota geral": 25.243330967098913, "Ranking": 47, "Perfil": "Disciplina"}, {"Equipe": "Uzbequistão", "Gols": 1, "Assistências": 0, "Finalizações": 15, "Finalizações certas": 4, "Conversão finalizações (%)": 7, "GE": 1.54, "Escanteios": 5, "Posse de bola (%)": 34, "Passes": 681, "Precisão passes (%)": 80, "Tentativas ruptura defensiva": 30, "Precisão rupturas (%)": 30, "Tentativas mudança direção": 10, "Precisão mudanças direção (%)": 80, "Gols contra": 1, "Gols sofridos": 8, "Perdas forçadas": 81, "Tempo recuperação bola (s)": 36.41, "Pressões defensivas": 602, "Pressões defensivas com êxito": 80, "Jogos sem sofrer gols": 0, "Faltas cometidas": 29, "Faltas sofridas": 23, "Cartões amarelos": 2, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 2, "Velocidade média (km/h)": 5.85, "Corridas alta velocidade": 2478, "Arrancadas": 869, "Distância total (m)": 221640.15, "Ataque": 10.075648860097928, "Controle": 22.050799946322336, "Defesa": 31.875009306471636, "Intensidade física": 17.719551938395863, "Disciplina": 59.33194415977773, "Nota geral": 23.992734180648906, "Ranking": 48, "Perfil": "Disciplina"}];
+const METRICS = ["Nota geral", "Ataque", "Defesa", "Controle", "Intensidade física", "Disciplina", "Gols", "Assistências", "Finalizações", "Finalizações certas", "Conversão finalizações (%)", "GE", "Escanteios", "Posse de bola (%)", "Passes", "Precisão passes (%)", "Tentativas ruptura defensiva", "Precisão rupturas (%)", "Gols sofridos", "Jogos sem sofrer gols", "Perdas forçadas", "Tempo recuperação bola (s)", "Pressões defensivas", "Pressões defensivas com êxito", "Faltas cometidas", "Cartões amarelos", "Cartões vermelhos", "Velocidade média (km/h)", "Corridas alta velocidade", "Arrancadas", "Distância total (m)"];
+const SUMMARY = {"total_equipes": 48, "melhor_geral": {"Equipe": "Alemanha", "Gols": 10, "Assistências": 9, "Finalizações": 53, "Finalizações certas": 22, "Conversão finalizações (%)": 19, "GE": 7.38, "Escanteios": 18, "Posse de bola (%)": 53, "Passes": 1887, "Precisão passes (%)": 89, "Tentativas ruptura defensiva": 63, "Precisão rupturas (%)": 56, "Tentativas mudança direção": 11, "Precisão mudanças direção (%)": 73, "Gols contra": 0, "Gols sofridos": 4, "Perdas forçadas": 144, "Tempo recuperação bola (s)": 41, "Pressões defensivas": 751, "Pressões defensivas com êxito": 155, "Jogos sem sofrer gols": 0, "Faltas cometidas": 33, "Faltas sofridas": 30, "Cartões amarelos": 1, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 0, "Velocidade média (km/h)": 6.37, "Corridas alta velocidade": 4351, "Arrancadas": 1518, "Distância total (m)": 356558.15, "Ataque": 84.11069804512428, "Controle": 61.113071008593394, "Defesa": 62.96401500010125, "Intensidade física": 99.23599130497941, "Disciplina": 66.2960306073649, "Nota geral": 74.71182912176467, "Ranking": 1, "Perfil": "Intensidade física"}, "melhor_ataque": {"Equipe": "Alemanha", "Gols": 10, "Assistências": 9, "Finalizações": 53, "Finalizações certas": 22, "Conversão finalizações (%)": 19, "GE": 7.38, "Escanteios": 18, "Posse de bola (%)": 53, "Passes": 1887, "Precisão passes (%)": 89, "Tentativas ruptura defensiva": 63, "Precisão rupturas (%)": 56, "Tentativas mudança direção": 11, "Precisão mudanças direção (%)": 73, "Gols contra": 0, "Gols sofridos": 4, "Perdas forçadas": 144, "Tempo recuperação bola (s)": 41, "Pressões defensivas": 751, "Pressões defensivas com êxito": 155, "Jogos sem sofrer gols": 0, "Faltas cometidas": 33, "Faltas sofridas": 30, "Cartões amarelos": 1, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 0, "Velocidade média (km/h)": 6.37, "Corridas alta velocidade": 4351, "Arrancadas": 1518, "Distância total (m)": 356558.15, "Ataque": 84.11069804512428, "Controle": 61.113071008593394, "Defesa": 62.96401500010125, "Intensidade física": 99.23599130497941, "Disciplina": 66.2960306073649, "Nota geral": 74.71182912176467, "Ranking": 1, "Perfil": "Intensidade física"}, "melhor_defesa": {"Equipe": "Espanha", "Gols": 5, "Assistências": 4, "Finalizações": 55, "Finalizações certas": 16, "Conversão finalizações (%)": 9, "GE": 6.58, "Escanteios": 23, "Posse de bola (%)": 62, "Passes": 2191, "Precisão passes (%)": 92, "Tentativas ruptura defensiva": 78, "Precisão rupturas (%)": 72, "Tentativas mudança direção": 21, "Precisão mudanças direção (%)": 95, "Gols contra": 0, "Gols sofridos": 0, "Perdas forçadas": 146, "Tempo recuperação bola (s)": 32.04, "Pressões defensivas": 629, "Pressões defensivas com êxito": 102, "Jogos sem sofrer gols": 3, "Faltas cometidas": 34, "Faltas sofridas": 15, "Cartões amarelos": 2, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 6, "Velocidade média (km/h)": 6.09, "Corridas alta velocidade": 3716, "Arrancadas": 1256, "Distância total (m)": 342164.48, "Ataque": 60.11487072086981, "Controle": 90.81618381618382, "Defesa": 77.30526736077468, "Intensidade física": 72.2681847034205, "Disciplina": 48.61595044521874, "Nota geral": 71.22583756972632, "Ranking": 3, "Perfil": "Controle"}, "melhor_controle": {"Equipe": "Espanha", "Gols": 5, "Assistências": 4, "Finalizações": 55, "Finalizações certas": 16, "Conversão finalizações (%)": 9, "GE": 6.58, "Escanteios": 23, "Posse de bola (%)": 62, "Passes": 2191, "Precisão passes (%)": 92, "Tentativas ruptura defensiva": 78, "Precisão rupturas (%)": 72, "Tentativas mudança direção": 21, "Precisão mudanças direção (%)": 95, "Gols contra": 0, "Gols sofridos": 0, "Perdas forçadas": 146, "Tempo recuperação bola (s)": 32.04, "Pressões defensivas": 629, "Pressões defensivas com êxito": 102, "Jogos sem sofrer gols": 3, "Faltas cometidas": 34, "Faltas sofridas": 15, "Cartões amarelos": 2, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 6, "Velocidade média (km/h)": 6.09, "Corridas alta velocidade": 3716, "Arrancadas": 1256, "Distância total (m)": 342164.48, "Ataque": 60.11487072086981, "Controle": 90.81618381618382, "Defesa": 77.30526736077468, "Intensidade física": 72.2681847034205, "Disciplina": 48.61595044521874, "Nota geral": 71.22583756972632, "Ranking": 3, "Perfil": "Controle"}, "melhor_fisico": {"Equipe": "Alemanha", "Gols": 10, "Assistências": 9, "Finalizações": 53, "Finalizações certas": 22, "Conversão finalizações (%)": 19, "GE": 7.38, "Escanteios": 18, "Posse de bola (%)": 53, "Passes": 1887, "Precisão passes (%)": 89, "Tentativas ruptura defensiva": 63, "Precisão rupturas (%)": 56, "Tentativas mudança direção": 11, "Precisão mudanças direção (%)": 73, "Gols contra": 0, "Gols sofridos": 4, "Perdas forçadas": 144, "Tempo recuperação bola (s)": 41, "Pressões defensivas": 751, "Pressões defensivas com êxito": 155, "Jogos sem sofrer gols": 0, "Faltas cometidas": 33, "Faltas sofridas": 30, "Cartões amarelos": 1, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 0, "Velocidade média (km/h)": 6.37, "Corridas alta velocidade": 4351, "Arrancadas": 1518, "Distância total (m)": 356558.15, "Ataque": 84.11069804512428, "Controle": 61.113071008593394, "Defesa": 62.96401500010125, "Intensidade física": 99.23599130497941, "Disciplina": 66.2960306073649, "Nota geral": 74.71182912176467, "Ranking": 1, "Perfil": "Intensidade física"}, "melhor_disciplina": {"Equipe": "Argélia", "Gols": 2, "Assistências": 1, "Finalizações": 24, "Finalizações certas": 9, "Conversão finalizações (%)": 8, "GE": 2.46, "Escanteios": 12, "Posse de bola (%)": 56, "Passes": 1295, "Precisão passes (%)": 90, "Tentativas ruptura defensiva": 44, "Precisão rupturas (%)": 59, "Tentativas mudança direção": 12, "Precisão mudanças direção (%)": 92, "Gols contra": 0, "Gols sofridos": 4, "Perdas forçadas": 95, "Tempo recuperação bola (s)": 29.3, "Pressões defensivas": 531, "Pressões defensivas com êxito": 85, "Jogos sem sofrer gols": 0, "Faltas cometidas": 14, "Faltas sofridas": 24, "Cartões amarelos": 1, "Cartões vermelhos": 0, "Cartões vermelhos indiretos": 0, "Impedimentos": 1, "Velocidade média (km/h)": 6.06, "Corridas alta velocidade": 2640, "Arrancadas": 909, "Distância total (m)": 225608.63, "Ataque": 24.38493037411984, "Controle": 61.367584322808206, "Defesa": 47.250689904093015, "Intensidade física": 28.295514042589033, "Disciplina": 69.88795518207284, "Nota geral": 42.63479107741649, "Ranking": 34, "Perfil": "Disciplina"}};
+const SCORE_METRICS = ["Nota geral", "Ataque", "Defesa", "Controle", "Intensidade física", "Disciplina"];
+const RAW_METRICS = ["Gols", "Assistências", "Finalizações", "Finalizações certas", "Conversão finalizações (%)", "GE", "Escanteios", "Posse de bola (%)", "Passes", "Precisão passes (%)", "Tentativas ruptura defensiva", "Precisão rupturas (%)", "Gols sofridos", "Jogos sem sofrer gols", "Perdas forçadas", "Tempo recuperação bola (s)", "Pressões defensivas", "Pressões defensivas com êxito", "Faltas cometidas", "Cartões amarelos", "Cartões vermelhos", "Velocidade média (km/h)", "Corridas alta velocidade", "Arrancadas", "Distância total (m)"];
+let sortState = {key:'Ranking', dir:1};
+
+const $ = id => document.getElementById(id);
+const PALETTE = ['#38bdf8','#f472b6','#22c55e','#a855f7','#f59e0b','#14b8a6','#ef4444','#60a5fa','#eab308','#fb7185'];
+const PROFILE_COLORS = {'Ataque':'#ef4444','Defesa':'#38bdf8','Controle':'#a855f7','Intensidade física':'#22c55e','Disciplina':'#f59e0b'};
+function colorFromString(str='') { let h=0; for (let i=0;i<str.length;i++) h = ((h<<5)-h) + str.charCodeAt(i); return PALETTE[Math.abs(h)%PALETTE.length]; }
+function rowColor(row) { return PROFILE_COLORS[row?.Perfil] || colorFromString(row?.Equipe || ''); }
+const fmt = (v, d=1) => {
+  if (v === null || v === undefined || v === '') return '-';
+  if (typeof v === 'number') {
+    if (Math.abs(v) >= 10000) return Math.round(v).toLocaleString('pt-BR');
+    if (Number.isInteger(v)) return v.toLocaleString('pt-BR');
+    return v.toLocaleString('pt-BR', {maximumFractionDigits:d, minimumFractionDigits: d});
+  }
+  return v;
+};
+const val = (row, key) => typeof row[key] === 'number' ? row[key] : Number(row[key]) || 0;
+const esc = s => String(s ?? '').replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+function minMax(metric) {
+  const arr = DATA.map(r => val(r,metric)).filter(Number.isFinite);
+  return [Math.min(...arr), Math.max(...arr)];
+}
+function getTeam(name) { return DATA.find(r => r.Equipe === name) || DATA[0]; }
+function current() { return { metric: $('metric').value, teamA: getTeam($('teamA').value), teamB: getTeam($('teamB').value), topN: +$('topN').value }; }
+function tooltip(html, x, y) {
+  const t = $('tooltip'); t.innerHTML = html; t.style.left = x+'px'; t.style.top = y+'px'; t.style.opacity = 1;
+}
+function hideTooltip() { $('tooltip').style.opacity = 0; }
+
+function init() {
+  const metricSel = $('metric');
+  METRICS.forEach(m => { const o=document.createElement('option'); o.value=m; o.textContent=m; metricSel.appendChild(o); });
+  metricSel.value='Nota geral';
+  ['teamA','teamB'].forEach(id => {
+    const sel=$(id);
+    DATA.slice().sort((a,b)=>a.Equipe.localeCompare(b.Equipe,'pt-BR')).forEach(r => { const o=document.createElement('option'); o.value=r.Equipe; o.textContent=r.Equipe; sel.appendChild(o); });
+  });
+  $('teamA').value = DATA[0].Equipe;
+  $('teamB').value = DATA[1].Equipe;
+  const profiles = [...new Set(DATA.map(r=>r.Perfil).filter(Boolean))].sort();
+  profiles.forEach(p => { const o=document.createElement('option'); o.value=p; o.textContent=p; $('profileFilter').appendChild(o); });
+  renderKpis();
+  ['metric','teamA','teamB','topN','search','profileFilter'].forEach(id => $(id).addEventListener('input', renderAll));
+  $('reset').addEventListener('click', () => { $('metric').value='Nota geral'; $('teamA').value=DATA[0].Equipe; $('teamB').value=DATA[1].Equipe; $('topN').value=10; $('search').value=''; $('profileFilter').value=''; renderAll(); });
+  renderAll();
+}
+
+function renderKpis() {
+  const cards = [
+    ['Melhor geral', SUMMARY.melhor_geral, 'Nota geral'],
+    ['Melhor ataque', SUMMARY.melhor_ataque, 'Ataque'],
+    ['Melhor defesa', SUMMARY.melhor_defesa, 'Defesa'],
+    ['Melhor controle', SUMMARY.melhor_controle, 'Controle'],
+    ['Melhor físico', SUMMARY.melhor_fisico, 'Intensidade física'],
+    ['Melhor disciplina', SUMMARY.melhor_disciplina, 'Disciplina'],
+  ];
+  $('kpis').innerHTML = cards.map(([label,row,key]) => `<div class="card kpi"><div class="label">${esc(label)}</div><div class="value">${esc(row?.Equipe || '-')}</div><div class="sub">${esc(key)}: ${fmt(row?.[key],1)}</div></div>`).join('');
+}
+
+function renderAll() {
+  $('topNLabel').textContent = $('topN').value;
+  renderBars(); renderRadar(); renderScatter(); renderDetails(); renderTable();
+}
+
+function renderBars() {
+  const {metric, topN, teamA, teamB} = current();
+  $('barTitle').textContent = `Top ${topN} por ${metric}`;
+  const data = DATA.slice().filter(r=>Number.isFinite(val(r,metric))).sort((a,b)=>val(b,metric)-val(a,metric)).slice(0,topN);
+  const width=860, rowH=30, top=22, left=130, right=70, h=top+data.length*rowH+28, w=width;
+  const [, max] = minMax(metric); const min = 0;
+  let svg = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Ranking por ${esc(metric)}">`;
+  svg += `<line x1="${left}" x2="${w-right}" y1="${h-22}" y2="${h-22}" stroke="var(--grid)"/>`;
+  data.forEach((r,i)=>{
+    const y=top+i*rowH;
+    const pct = max === min ? 0 : (val(r,metric)-min)/(max-min);
+    const bw = Math.max(3, pct*(w-left-right));
+    const isA = r.Equipe === teamA.Equipe, isB = r.Equipe === teamB.Equipe;
+    const color = isA ? 'var(--accent)' : isB ? 'var(--accent2)' : rowColor(r);
+    svg += `<text x="${left-8}" y="${y+18}" text-anchor="end" fill="#dbeafe" font-size="12">${esc(r.Equipe)}</text>`;
+    svg += `<rect x="${left}" y="${y+4}" width="${bw}" height="18" rx="9" fill="${color}" data-tip="${esc(r.Equipe)} · ${esc(metric)}: ${fmt(val(r,metric),1)}"></rect>`;
+    svg += `<text x="${Math.min(left+bw+8,w-right+4)}" y="${y+18}" fill="#f9fafb" font-size="12" font-weight="700">${fmt(val(r,metric),1)}</text>`;
+  });
+  svg += `</svg>`;
+  $('barChart').innerHTML = svg;
+  $('barChart').querySelectorAll('[data-tip]').forEach(el => { el.addEventListener('mousemove', e=>tooltip(el.dataset.tip,e.clientX,e.clientY)); el.addEventListener('mouseleave',hideTooltip); });
+}
+
+function renderRadar() {
+  const {teamA,teamB} = current();
+  const metrics = ['Ataque','Defesa','Controle','Intensidade física','Disciplina'];
+  const w=520,h=380,cx=w/2,cy=195,r=125;
+  function point(i, value) {
+    const angle = -Math.PI/2 + i*2*Math.PI/metrics.length;
+    const rr = r * Math.max(0, Math.min(100, value))/100;
+    return [cx + rr*Math.cos(angle), cy + rr*Math.sin(angle)];
+  }
+  function poly(row) { return metrics.map((m,i)=>point(i,val(row,m)).join(',')).join(' '); }
+  let svg = `<svg viewBox="0 0 ${w} ${h}">`;
+  [25,50,75,100].forEach(t=>{
+    const pts=metrics.map((m,i)=>point(i,t).join(',')).join(' ');
+    svg += `<polygon points="${pts}" fill="none" stroke="var(--grid)"/>`;
+  });
+  metrics.forEach((m,i)=>{
+    const [x,y]=point(i,100);
+    svg += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="var(--grid)"/>`;
+    const lx = cx + (x-cx)*1.16, ly=cy+(y-cy)*1.16;
+    svg += `<text x="${lx}" y="${ly}" text-anchor="middle" fill="#cbd5e1" font-size="12">${esc(m.replace('Intensidade física','Físico'))}</text>`;
+  });
+  svg += `<polygon points="${poly(teamA)}" fill="rgba(56,189,248,.24)" stroke="var(--accent)" stroke-width="3"/>`;
+  svg += `<polygon points="${poly(teamB)}" fill="rgba(244,114,182,.18)" stroke="var(--accent2)" stroke-width="3"/>`;
+  metrics.forEach((m,i)=>{
+    let [x,y]=point(i,val(teamA,m)); svg += `<circle cx="${x}" cy="${y}" r="4" fill="var(--accent)"/>`;
+    [x,y]=point(i,val(teamB,m)); svg += `<circle cx="${x}" cy="${y}" r="4" fill="var(--accent2)"/>`;
+  });
+  svg += `</svg>`;
+  $('radarChart').innerHTML = svg;
+  $('nameA').innerHTML = `<span><span class="dot"></span> ${esc(teamA.Equipe)}</span>`;
+  $('nameB').innerHTML = `<span><span class="dot green"></span> ${esc(teamB.Equipe)}</span>`;
+}
+
+function renderScatter() {
+  const {teamA,teamB} = current();
+  const w=780,h=410,l=62,r=24,t=20,b=52;
+  const xM='Ataque', yM='Defesa';
+  const [xmin,xmax]=minMax(xM), [ymin,ymax]=minMax(yM);
+  const pad=5;
+  const sx = x => l + (x-(xmin-pad))/(xmax-xmin+2*pad)*(w-l-r);
+  const sy = y => h-b - (y-(ymin-pad))/(ymax-ymin+2*pad)*(h-t-b);
+  let svg = `<svg viewBox="0 0 ${w} ${h}">`;
+  for(let i=0;i<=5;i++){
+    const x=l+i*(w-l-r)/5; const y=t+i*(h-t-b)/5;
+    svg += `<line x1="${x}" x2="${x}" y1="${t}" y2="${h-b}" stroke="var(--grid)"/>`;
+    svg += `<line x1="${l}" x2="${w-r}" y1="${y}" y2="${y}" stroke="var(--grid)"/>`;
+  }
+  svg += `<text x="${w/2}" y="${h-14}" text-anchor="middle" fill="#cbd5e1" font-size="12">Ataque</text>`;
+  svg += `<text transform="translate(16,${h/2}) rotate(-90)" text-anchor="middle" fill="#cbd5e1" font-size="12">Defesa</text>`;
+  DATA.forEach(row=>{
+    const isA=row.Equipe===teamA.Equipe, isB=row.Equipe===teamB.Equipe;
+    const rr=isA||isB?7:4;
+    const fill=isA?'var(--accent)':isB?'var(--accent2)':rowColor(row);
+    const opacity=isA||isB?1:.8;
+    svg += `<circle cx="${sx(val(row,xM))}" cy="${sy(val(row,yM))}" r="${rr}" fill="${fill}" fill-opacity="${opacity}" data-tip="${esc(row.Equipe)} · Ataque: ${fmt(val(row,xM),1)} · Defesa: ${fmt(val(row,yM),1)} · Perfil: ${esc(row.Perfil)}"></circle>`;
+  });
+  [teamA, teamB].forEach(row=>{
+    svg += `<text x="${sx(val(row,xM))+9}" y="${sy(val(row,yM))-8}" fill="#fff" font-size="12" font-weight="700">${esc(row.Equipe)}</text>`;
+  });
+  svg += `</svg>`;
+  $('scatterChart').innerHTML = svg;
+  $('scatterChart').querySelectorAll('[data-tip]').forEach(el => { el.addEventListener('mousemove', e=>tooltip(el.dataset.tip,e.clientX,e.clientY)); el.addEventListener('mouseleave',hideTooltip); });
+}
+
+function renderDetails() {
+  const {teamA} = current();
+  const rows = [
+    ['Ranking geral', '#'+fmt(teamA.Ranking,0)],
+    ['Perfil dominante', teamA.Perfil],
+    ['Nota geral', fmt(teamA['Nota geral'],1)],
+    ['Ataque', fmt(teamA.Ataque,1)], ['Defesa', fmt(teamA.Defesa,1)], ['Controle', fmt(teamA.Controle,1)], ['Físico', fmt(teamA['Intensidade física'],1)], ['Disciplina', fmt(teamA.Disciplina,1)],
+    ['Gols', fmt(teamA.Gols,0)], ['Finalizações certas', fmt(teamA['Finalizações certas'],0)], ['Conversão finalizações', fmt(teamA['Conversão finalizações (%)'],1)+'%'],
+    ['Posse de bola', fmt(teamA['Posse de bola (%)'],1)+'%'], ['Precisão passes', fmt(teamA['Precisão passes (%)'],1)+'%'],
+    ['Gols sofridos', fmt(teamA['Gols sofridos'],0)], ['Jogos sem sofrer gols', fmt(teamA['Jogos sem sofrer gols'],0)],
+    ['Distância total', fmt(teamA['Distância total (m)'],0)+' m']
+  ];
+  $('details').innerHTML = rows.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join('');
+}
+
+function filteredData() {
+  const q = $('search').value.trim().toLowerCase();
+  const p = $('profileFilter').value;
+  return DATA.filter(r => (!q || r.Equipe.toLowerCase().includes(q)) && (!p || r.Perfil === p));
+}
+
+function renderTable() {
+  const cols = ['Ranking','Equipe','Nota geral','Ataque','Defesa','Controle','Intensidade física','Disciplina','Perfil','Gols','Finalizações','Conversão finalizações (%)','Posse de bola (%)','Gols sofridos','Distância total (m)'];
+  let rows = filteredData().slice();
+  const {key, dir} = sortState;
+  rows.sort((a,b) => {
+    const av=a[key], bv=b[key];
+    if (typeof av === 'number' && typeof bv === 'number') return (av-bv)*dir;
+    return String(av ?? '').localeCompare(String(bv ?? ''),'pt-BR')*dir;
+  });
+  $('dataTable').innerHTML = `<thead><tr>${cols.map(c=>`<th data-key="${esc(c)}">${esc(c)} ${sortState.key===c ? (sortState.dir>0?'↑':'↓') : ''}</th>`).join('')}</tr></thead>` +
+    `<tbody>${rows.map(r=>`<tr>${cols.map(c=>{
+      const isNum = typeof r[c] === 'number';
+      if(c==='Ranking') return `<td><span class="rank-pill">${fmt(r[c],0)}</span></td>`;
+      return `<td class="${isNum?'num':''}">${esc(fmt(r[c], c.includes('%') || SCORE_METRICS.includes(c) ? 1 : 0))}</td>`;
+    }).join('')}</tr>`).join('')}</tbody>`;
+  $('dataTable').querySelectorAll('th').forEach(th => th.addEventListener('click', () => {
+    const key = th.dataset.key;
+    if (sortState.key === key) sortState.dir *= -1; else sortState = {key, dir: key==='Ranking' ? 1 : -1};
+    renderTable();
+  }));
+}
+
+init();
+</script>
+</body>
+</html>
