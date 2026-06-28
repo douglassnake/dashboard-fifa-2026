@@ -212,23 +212,42 @@
     .main { grid-template-columns: 1.3fr .9fr; align-items:start; }
     .panel { padding:18px; overflow:hidden; }
     .panel h2 { font-size:17px; margin:0 0 14px; letter-spacing:-.015em; color:#ffffff; }
-    .chart { min-height: 360px; }
-    .chart svg { width:100%; height:100%; display:block; }
+    .chart { min-height: 360px; overflow:hidden; }
+    .chart svg { width:100%; height:auto; display:block; }
     .small-grid { grid-template-columns: repeat(2,minmax(0,1fr)); margin-top:16px; }
     .two-col { grid-template-columns: 1fr 1fr; margin-top:16px; }
 
-    .detail-table { width:100%; border-collapse:collapse; font-size:13px; }
-    .detail-table td { padding:9px 0; border-bottom:1px solid var(--border); color:#e5efff; }
-    .detail-table tr:nth-child(6n+1) td:nth-child(2) { color:#63ffe0; }
-    .detail-table tr:nth-child(6n+2) td:nth-child(2) { color:#ff85d6; }
-    .detail-table tr:nth-child(6n+3) td:nth-child(2) { color:#a4ff38; }
-    .detail-table tr:nth-child(6n+4) td:nth-child(2) { color:#c8a9ff; }
-    .detail-table tr:nth-child(6n+5) td:nth-child(2) { color:#fff175; }
-    .detail-table tr:nth-child(6n) td:nth-child(2) { color:#ff8a4d; }
-    .detail-table td:nth-child(2) { text-align:right; font-weight:800; }
+    .detail-grid { display:grid; gap:8px; font-size:13px; }
+    .detail-row {
+      display:grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap:12px;
+      align-items:center;
+      min-height:38px;
+      padding:9px 11px;
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:14px;
+      background:linear-gradient(135deg, rgba(255,255,255,.075), rgba(255,255,255,.025));
+    }
+    .detail-label { min-width:0; color:#e5efff; overflow-wrap:anywhere; }
+    .detail-value {
+      min-width:0;
+      text-align:right;
+      font-weight:900;
+      color:var(--detail-color, #63ffe0);
+      font-variant-numeric: tabular-nums;
+      overflow-wrap:anywhere;
+    }
 
     .table-panel { margin-top:16px; }
-    .table-wrap { overflow:auto; max-height:520px; border-radius:16px; border:1px solid var(--border); }
+    .table-controls { margin-bottom:12px; display:grid; grid-template-columns: 1fr 220px; gap:12px; align-items:center; }
+    .table-wrap {
+      overflow:auto;
+      max-height:520px;
+      border-radius:16px;
+      border:1px solid var(--border);
+      -webkit-overflow-scrolling: touch;
+    }
     table { width:100%; border-collapse:collapse; min-width: 1000px; }
     th, td { padding:10px 12px; border-bottom:1px solid var(--border); font-size:13px; text-align:left; }
     th {
@@ -317,6 +336,7 @@
     .analysis-card h3 { margin:0 0 8px; font-size:14px; letter-spacing:-.01em; color:#fff; position:relative; }
     .analysis-card .big { font-size:30px; font-weight:950; letter-spacing:-.04em; line-height:1; margin:10px 0 6px; position:relative; }
     .analysis-card p { margin:0; color:#e7efff; font-size:12.5px; line-height:1.42; position:relative; }
+    .advanced-subtitle { margin:18px 0 8px; font-size:15px; color:#ffffff; letter-spacing:-.01em; }
     .meter { height:10px; border-radius:999px; background:rgba(255,255,255,.16); margin:10px 0 8px; overflow:hidden; position:relative; }
     .meter span { display:block; height:100%; width:0%; border-radius:999px; background:linear-gradient(90deg,#35c8ff,#83ff00,#fff175,#ff4d00,#ff3dbb); }
     .strength-grid { display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:12px; }
@@ -324,6 +344,18 @@
     .mini-list h3 { margin:0 0 10px; font-size:14px; }
     .mini-list ul { margin:0; padding-left:18px; color:#eaf2ff; line-height:1.55; font-size:13px; }
     .pill-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .tactical-group {
+      flex:1 1 260px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+      padding:12px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.13);
+      background:rgba(0,0,0,.13);
+    }
+    .tactical-group strong { width:100%; color:#eaf2ff; font-size:13px; }
     .info-pill {
       display:inline-flex; align-items:center; gap:6px; padding:7px 10px; border-radius:999px;
       background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.16);
@@ -342,7 +374,21 @@
       border:1px solid rgba(255,255,255,.13); color:#eaf2ff; font-size:13px; line-height:1.5;
     }
     @media (max-width: 1100px) { .advanced-grid { grid-template-columns: 1fr 1fr; } .strength-grid { grid-template-columns: 1fr; } }
-    @media (max-width: 720px) { .advanced-grid, .favor-box { grid-template-columns: 1fr; } .versus { margin:auto; } }
+    @media (max-width: 720px) {
+      .advanced-grid, .favor-box, .table-controls { grid-template-columns: 1fr; }
+      .versus { margin:auto; }
+      .chart { min-height: 300px; overflow-x:auto; -webkit-overflow-scrolling: touch; }
+      .chart svg { min-width:520px; }
+      #barChart svg, #scatterChart svg { min-width:680px; }
+      .compare-names { flex-direction:column; gap:8px; }
+      button { width:100%; }
+    }
+    @media (max-width: 520px) {
+      .detail-row { grid-template-columns: 1fr; gap:4px; }
+      .detail-value { text-align:left; font-size:15px; }
+      .table-wrap { margin-inline:-6px; border-radius:12px; }
+      th, td { padding:9px 10px; }
+    }
 
   </style>
 </head>
@@ -399,7 +445,7 @@
       </div>
       <div class="panel">
         <h2>Raio-X da seleção principal</h2>
-        <table class="detail-table" id="details"></table>
+        <div class="detail-grid" id="details"></div>
       </div>
     </section>
 
@@ -427,6 +473,7 @@
         </div>
       </div>
 
+      <h3 class="advanced-subtitle">Índice de Favoritismo</h3>
       <div class="favor-box">
         <div class="favor-side">
           <div class="favor-name" id="favNameA">Seleção A</div>
@@ -453,13 +500,14 @@
         </div>
       </div>
 
+      <h3 class="advanced-subtitle">Perfil tático das seleções</h3>
       <div class="pill-row" id="tacticalProfile"></div>
     </section>
 
 
     <section class="panel table-panel">
       <h2>Tabela interativa</h2>
-      <div style="margin-bottom:12px; display:grid; grid-template-columns: 1fr 220px; gap:12px; align-items:center;">
+      <div class="table-controls">
         <input id="search" type="search" placeholder="Buscar seleção...">
         <select id="profileFilter"><option value="">Todos os perfis</option></select>
       </div>
@@ -638,8 +686,14 @@ function renderDetails() {
     ['Posse de bola', fmt(teamA['Posse de bola (%)'],1)+'%'], ['Precisão passes', fmt(teamA['Precisão passes (%)'],1)+'%'],
     ['Gols sofridos', fmt(teamA['Gols sofridos'],0)], ['Jogos sem sofrer gols', fmt(teamA['Jogos sem sofrer gols'],0)],
     ['Distância total', fmt(teamA['Distância total (m)'],0)+' m']
-  ];
-  $('details').innerHTML = rows.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join('');
+  ].filter(([label, value]) => label && value !== null && value !== undefined && value !== '');
+  const colors = ['#63ffe0', '#ff85d6', '#a4ff38', '#c8a9ff', '#fff175', '#ff8a4d'];
+  $('details').innerHTML = rows.map(([label, value], i) =>
+    `<div class="detail-row" style="--detail-color:${colors[i % colors.length]}">` +
+      `<span class="detail-label">${esc(label)}</span>` +
+      `<span class="detail-value">${esc(value)}</span>` +
+    `</div>`
+  ).join('');
 }
 
 
@@ -779,11 +833,19 @@ function renderAdvanced() {
   $('weaknessList').innerHTML = topWeaknesses(teamA)
     .map(([name,score]) => `<li><strong>${esc(name)}</strong> — atenção ${fmt(score,1)}</li>`).join('');
 
-  $('tacticalProfile').innerHTML = tacticalTags(teamA)
-    .map(t => `<span class="info-pill">${esc(t)}</span>`).join('') +
-    `<span class="info-pill">Perigo: ${fmt(danger,1)}</span>` +
-    `<span class="info-pill">Risco: ${fmt(risk,1)}</span>` +
-    `<span class="info-pill">Eficiência: ${fmt(eff,1)}</span>`;
+  const dangerB = dangerIndex(teamB);
+  const riskB = defensiveRiskIndex(teamB);
+  const effB = offensiveEfficiencyIndex(teamB);
+  const tacticalGroup = (row, metrics) =>
+    `<div class="tactical-group"><strong>${esc(row.Equipe)}</strong>` +
+      tacticalTags(row).map(t => `<span class="info-pill">${esc(t)}</span>`).join('') +
+      `<span class="info-pill">Perigo: ${fmt(metrics.danger,1)}</span>` +
+      `<span class="info-pill">Risco: ${fmt(metrics.risk,1)}</span>` +
+      `<span class="info-pill">Eficiência: ${fmt(metrics.eff,1)}</span>` +
+    `</div>`;
+  $('tacticalProfile').innerHTML =
+    tacticalGroup(teamA, {danger, risk, eff}) +
+    tacticalGroup(teamB, {danger: dangerB, risk: riskB, eff: effB});
 }
 
 
