@@ -455,6 +455,149 @@
     @media (max-width: 1100px) { .advanced-grid { grid-template-columns: 1fr 1fr; } .strength-grid { grid-template-columns: 1fr; } }
     @media (max-width: 720px) { .advanced-grid, .favor-box { grid-template-columns: 1fr; } .versus { margin:auto; } }
 
+    .tactical-play-panel {
+      margin-top:16px;
+      background:
+        linear-gradient(135deg, rgba(53,200,255,.13), rgba(255,77,0,.10), rgba(131,255,0,.08)),
+        rgba(255,255,255,.04);
+    }
+    .tactical-play-grid {
+      display:grid;
+      grid-template-columns:minmax(0, 1.35fr) minmax(320px, .65fr);
+      gap:14px;
+      align-items:start;
+    }
+    .tactical-toolbar, .tactical-report-actions {
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin:12px 0;
+    }
+    .tactical-tool, .tactical-chip, .tactical-action {
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:12px;
+      padding:10px 12px;
+      background:rgba(255,255,255,.08);
+      box-shadow:none;
+      font-size:12px;
+      font-weight:850;
+    }
+    .tactical-tool.active, .tactical-chip.active {
+      background:linear-gradient(135deg, rgba(53,200,255,.90), rgba(123,44,255,.82));
+      border-color:rgba(255,255,255,.45);
+    }
+    .tactical-color-row {
+      display:grid;
+      grid-template-columns:repeat(5, minmax(0,1fr));
+      gap:8px;
+      margin:12px 0;
+    }
+    .tactical-color {
+      min-height:42px;
+      border:1px solid rgba(255,255,255,.20);
+      border-radius:12px;
+      box-shadow:none;
+      background:var(--mark-color);
+      color:#fff;
+      text-shadow:0 1px 6px rgba(0,0,0,.55);
+      padding:8px;
+      font-size:11px;
+    }
+    .tactical-color.active { outline:3px solid rgba(255,255,255,.45); }
+    .tactical-upload {
+      display:grid;
+      gap:8px;
+      padding:12px;
+      border:1px dashed rgba(255,255,255,.24);
+      border-radius:16px;
+      background:rgba(0,0,0,.14);
+      margin-bottom:12px;
+    }
+    .tactical-upload input[type="file"] {
+      width:100%;
+      color:#eaf2ff;
+    }
+    .tactical-canvas-wrap {
+      position:relative;
+      min-height:360px;
+      display:grid;
+      place-items:center;
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:18px;
+      background:
+        linear-gradient(45deg, rgba(255,255,255,.055) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(255,255,255,.055) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(255,255,255,.055) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(255,255,255,.055) 75%),
+        rgba(0,0,0,.22);
+      background-size:28px 28px;
+      background-position:0 0,0 14px,14px -14px,-14px 0;
+      overflow:hidden;
+      touch-action:none;
+    }
+    #tacticalCanvas {
+      max-width:100%;
+      height:auto;
+      display:block;
+      cursor:crosshair;
+    }
+    .tactical-empty {
+      position:absolute;
+      inset:auto 18px;
+      text-align:center;
+      color:#dbeafe;
+      pointer-events:none;
+      line-height:1.45;
+      font-size:13px;
+    }
+    .tactical-side {
+      display:grid;
+      gap:10px;
+    }
+    .tactical-form {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    .tactical-form .wide { grid-column:1 / -1; }
+    .tactical-form textarea, .tactical-form input, .tactical-form select {
+      width:100%;
+      border:1px solid rgba(255,255,255,.20);
+      border-radius:14px;
+      background:linear-gradient(180deg, rgba(4,16,33,.97), rgba(10,20,43,.92));
+      color:#fff;
+      padding:11px 12px;
+      outline:none;
+      color-scheme:dark;
+      font-weight:650;
+      font-family:var(--font);
+    }
+    .tactical-form textarea {
+      min-height:74px;
+      resize:vertical;
+      line-height:1.4;
+    }
+    .tactical-output {
+      min-height:170px;
+      padding:14px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.16);
+      color:#eaf2ff;
+      line-height:1.55;
+      font-size:13px;
+      white-space:pre-wrap;
+    }
+    @media (max-width: 1100px) {
+      .tactical-play-grid { grid-template-columns:1fr; }
+    }
+    @media (max-width: 720px) {
+      .tactical-color-row, .tactical-form { grid-template-columns:1fr; }
+      .tactical-form .wide { grid-column:auto; }
+      .tactical-tool, .tactical-chip, .tactical-action { flex:1 1 calc(50% - 8px); }
+      .tactical-canvas-wrap { min-height:280px; }
+    }
+
   </style>
 </head>
 <body>
@@ -614,6 +757,122 @@
           <h2 id="playerTableTitle">Tabela de jogadores</h2>
           <div class="player-table-wrap"><table class="player-table" id="playerTable"></table></div>
         </div>
+      </div>
+    </section>
+
+    <section class="panel tactical-play-panel" id="tacticalPlaySection">
+      <h2>Análise Tática de Jogadas</h2>
+      <div class="tactical-play-grid">
+        <div>
+          <div class="tactical-upload">
+            <label for="tacticalImage">Carregar imagem da jogada (PNG, JPG ou JPEG)</label>
+            <input id="tacticalImage" type="file" accept="image/png,image/jpeg">
+          </div>
+
+          <div class="tactical-toolbar" aria-label="Ferramentas de marcação">
+            <button class="tactical-tool active" data-tool="circle" type="button">Círculo</button>
+            <button class="tactical-tool" data-tool="line" type="button">Linha</button>
+            <button class="tactical-tool" data-tool="arrow" type="button">Seta</button>
+            <button class="tactical-tool" data-tool="dashed" type="button">Tracejada</button>
+            <button class="tactical-tool" data-tool="polygon" type="button">Zona</button>
+            <button class="tactical-tool" data-tool="text" type="button">Texto</button>
+            <button class="tactical-tool" data-tool="highlightCircle" type="button">Destaque circular</button>
+            <button class="tactical-tool" data-tool="highlightRect" type="button">Destaque retangular</button>
+            <button class="tactical-tool" data-tool="eraser" type="button">Apagar</button>
+            <button class="tactical-action" id="tacticalUndo" type="button">Desfazer</button>
+            <button class="tactical-action" id="tacticalClear" type="button">Limpar</button>
+          </div>
+
+          <div class="tactical-color-row" aria-label="Cores das marcações">
+            <button class="tactical-color active" style="--mark-color:#ef233c" data-color="#ef233c" type="button">Vermelho</button>
+            <button class="tactical-color" style="--mark-color:#2563eb" data-color="#2563eb" type="button">Azul</button>
+            <button class="tactical-color" style="--mark-color:#facc15" data-color="#facc15" type="button">Amarelo</button>
+            <button class="tactical-color" style="--mark-color:#22c55e" data-color="#22c55e" type="button">Verde</button>
+            <button class="tactical-color" style="--mark-color:#f97316" data-color="#f97316" type="button">Laranja</button>
+          </div>
+
+          <div class="tactical-toolbar" aria-label="Ferramentas táticas pré-configuradas">
+            <button class="tactical-chip" data-preset="Linha de passe" type="button">Linha de passe</button>
+            <button class="tactical-chip" data-preset="Linha defensiva" type="button">Linha defensiva</button>
+            <button class="tactical-chip" data-preset="Linha de impedimento" type="button">Linha de impedimento</button>
+            <button class="tactical-chip" data-preset="Pressão" type="button">Pressão</button>
+            <button class="tactical-chip" data-preset="Espaço livre" type="button">Espaço livre</button>
+            <button class="tactical-chip" data-preset="Homem livre" type="button">Homem livre</button>
+            <button class="tactical-chip" data-preset="Movimentação" type="button">Movimentação</button>
+            <button class="tactical-chip" data-preset="Zona de finalização" type="button">Zona de finalização</button>
+            <button class="tactical-chip" data-preset="Bloco defensivo" type="button">Bloco defensivo</button>
+            <button class="tactical-chip" data-preset="Superioridade numérica" type="button">Superioridade numérica</button>
+          </div>
+
+          <div class="tactical-canvas-wrap">
+            <canvas id="tacticalCanvas" width="960" height="540"></canvas>
+            <div class="tactical-empty" id="tacticalEmpty">Carregue uma imagem para iniciar a análise. As marcações serão desenhadas sobre o lance.</div>
+          </div>
+        </div>
+
+        <aside class="tactical-side">
+          <div class="tactical-form">
+            <div>
+              <label>Time com a posse</label>
+              <input id="tacticalPossession" type="text" placeholder="Ex.: Brasil">
+            </div>
+            <div>
+              <label>Time defendendo</label>
+              <input id="tacticalDefending" type="text" placeholder="Ex.: França">
+            </div>
+            <div>
+              <label>Minuto da jogada</label>
+              <input id="tacticalMinute" type="text" placeholder="Ex.: 62'">
+            </div>
+            <div>
+              <label>Fase do jogo</label>
+              <select id="tacticalPhase">
+                <option>Construção</option>
+                <option>Progressão</option>
+                <option>Criação</option>
+                <option>Finalização</option>
+                <option>Transição ofensiva</option>
+                <option>Transição defensiva</option>
+              </select>
+            </div>
+            <div class="wide">
+              <label>Tipo de jogada</label>
+              <select id="tacticalPlayType">
+                <option>Ataque posicional</option>
+                <option>Contra-ataque</option>
+                <option>Bola parada</option>
+                <option>Pressão alta</option>
+                <option>Saída de bola</option>
+                <option>Cruzamento</option>
+                <option>Inversão</option>
+                <option>Lançamento</option>
+              </select>
+            </div>
+            <div class="wide">
+              <label>Problema identificado</label>
+              <textarea id="tacticalProblem" placeholder="Ex.: espaço entre lateral e zagueiro"></textarea>
+            </div>
+            <div class="wide">
+              <label>Melhor decisão possível</label>
+              <textarea id="tacticalDecision" placeholder="Ex.: acionar o corredor livre"></textarea>
+            </div>
+            <div class="wide">
+              <label>Risco da jogada</label>
+              <textarea id="tacticalRisk" placeholder="Ex.: perda por dentro e contra-ataque"></textarea>
+            </div>
+            <div class="wide">
+              <label>Oportunidade criada</label>
+              <textarea id="tacticalOpportunity" placeholder="Ex.: superioridade numérica no último terço"></textarea>
+            </div>
+          </div>
+
+          <div class="tactical-report-actions">
+            <button id="tacticalGenerate" type="button">Gerar análise textual</button>
+            <button id="tacticalExportImage" type="button">Exportar imagem analisada</button>
+            <button id="tacticalExportReport" type="button">Exportar relatório</button>
+          </div>
+          <div class="tactical-output" id="tacticalAnalysisText">Preencha os campos e clique em "Gerar análise textual" para montar o relatório do lance.</div>
+        </aside>
       </div>
     </section>
 
@@ -1137,7 +1396,295 @@ function renderPlayerTable(rows, category) {
   }));
 }
 
+function initTacticalPlayAnalyzer() {
+  const canvas = $('tacticalCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const state = {
+    tool: 'circle',
+    color: '#ef233c',
+    image: null,
+    imageName: 'jogada',
+    items: [],
+    draft: null,
+    polygon: [],
+    preset: ''
+  };
+  const presetConfig = {
+    'Linha de passe': {tool:'arrow', color:'#22c55e'},
+    'Linha defensiva': {tool:'line', color:'#2563eb'},
+    'Linha de impedimento': {tool:'dashed', color:'#facc15'},
+    'Pressão': {tool:'arrow', color:'#f97316'},
+    'Espaço livre': {tool:'highlightRect', color:'#facc15'},
+    'Homem livre': {tool:'circle', color:'#facc15'},
+    'Movimentação': {tool:'dashed', color:'#22c55e'},
+    'Zona de finalização': {tool:'highlightCircle', color:'#ef233c'},
+    'Bloco defensivo': {tool:'polygon', color:'#2563eb'},
+    'Superioridade numérica': {tool:'polygon', color:'#22c55e'}
+  };
+  const fields = ['Possession','Defending','Minute','Phase','PlayType','Problem','Decision','Risk','Opportunity'];
+  const getField = name => ($('tactical' + name)?.value || '').trim();
+  const pointFromEvent = event => {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (event.clientX - rect.left) * (canvas.width / rect.width),
+      y: (event.clientY - rect.top) * (canvas.height / rect.height)
+    };
+  };
+  const download = (href, filename) => {
+    const link = document.createElement('a');
+    link.href = href;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
+  const setTool = tool => {
+    state.tool = tool;
+    document.querySelectorAll('.tactical-tool').forEach(btn => btn.classList.toggle('active', btn.dataset.tool === tool));
+  };
+  const setColor = color => {
+    state.color = color;
+    document.querySelectorAll('.tactical-color').forEach(btn => btn.classList.toggle('active', btn.dataset.color === color));
+  };
+  const drawArrowHead = (item) => {
+    const angle = Math.atan2(item.y2 - item.y1, item.x2 - item.x1);
+    const size = Math.max(14, canvas.width * 0.018);
+    ctx.beginPath();
+    ctx.moveTo(item.x2, item.y2);
+    ctx.lineTo(item.x2 - size * Math.cos(angle - Math.PI / 6), item.y2 - size * Math.sin(angle - Math.PI / 6));
+    ctx.lineTo(item.x2 - size * Math.cos(angle + Math.PI / 6), item.y2 - size * Math.sin(angle + Math.PI / 6));
+    ctx.closePath();
+    ctx.fill();
+  };
+  const drawItem = (item) => {
+    ctx.save();
+    ctx.strokeStyle = item.color;
+    ctx.fillStyle = item.color;
+    ctx.lineWidth = Math.max(4, canvas.width * 0.006);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    if (item.type === 'dashed') ctx.setLineDash([18, 14]);
+    if (['line','arrow','dashed'].includes(item.type)) {
+      ctx.beginPath();
+      ctx.moveTo(item.x1, item.y1);
+      ctx.lineTo(item.x2, item.y2);
+      ctx.stroke();
+      if (item.type === 'arrow') drawArrowHead(item);
+    }
+    if (item.type === 'circle' || item.type === 'highlightCircle') {
+      const radius = Math.hypot(item.x2 - item.x1, item.y2 - item.y1);
+      ctx.globalAlpha = item.type === 'highlightCircle' ? .24 : 1;
+      ctx.beginPath();
+      ctx.arc(item.x1, item.y1, radius, 0, Math.PI * 2);
+      if (item.type === 'highlightCircle') ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.stroke();
+    }
+    if (item.type === 'highlightRect') {
+      const x = Math.min(item.x1, item.x2), y = Math.min(item.y1, item.y2);
+      const w = Math.abs(item.x2 - item.x1), h = Math.abs(item.y2 - item.y1);
+      ctx.globalAlpha = .22;
+      ctx.fillRect(x, y, w, h);
+      ctx.globalAlpha = 1;
+      ctx.strokeRect(x, y, w, h);
+    }
+    if (item.type === 'polygon') {
+      ctx.beginPath();
+      item.points.forEach((p, index) => index ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+      if (item.closed) ctx.closePath();
+      ctx.globalAlpha = item.closed ? .20 : 1;
+      if (item.closed) ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.stroke();
+    }
+    if (item.type === 'text') {
+      ctx.font = `700 ${Math.max(20, canvas.width * 0.028)}px ${getComputedStyle(document.body).fontFamily}`;
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = 'rgba(0,0,0,.72)';
+      ctx.strokeText(item.text, item.x1, item.y1);
+      ctx.fillText(item.text, item.x1, item.y1);
+    }
+    ctx.restore();
+  };
+  const render = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (state.image) ctx.drawImage(state.image, 0, 0, canvas.width, canvas.height);
+    else {
+      ctx.fillStyle = 'rgba(255,255,255,.045)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    state.items.forEach(drawItem);
+    if (state.polygon.length) drawItem({type:'polygon', color:state.color, points:state.polygon, closed:false});
+    if (state.draft) drawItem(state.draft);
+  };
+  const findItem = point => {
+    for (let i = state.items.length - 1; i >= 0; i--) {
+      const item = state.items[i];
+      const pts = item.points || [{x:item.x1, y:item.y1}, {x:item.x2, y:item.y2}];
+      if (pts.some(p => Math.hypot(p.x - point.x, p.y - point.y) < 24)) return i;
+      if (item.type === 'text' && Math.hypot(item.x1 - point.x, item.y1 - point.y) < 50) return i;
+    }
+    return -1;
+  };
+  const addItem = item => {
+    state.items.push({...item, color: item.color || state.color, preset: state.preset});
+    state.draft = null;
+    render();
+  };
+  canvas.addEventListener('pointerdown', event => {
+    if (!state.image && state.tool !== 'text') return;
+    const point = pointFromEvent(event);
+    canvas.setPointerCapture(event.pointerId);
+    if (state.tool === 'eraser') {
+      const index = findItem(point);
+      if (index >= 0) state.items.splice(index, 1);
+      render();
+      return;
+    }
+    if (state.tool === 'polygon') {
+      state.polygon.push(point);
+      render();
+      return;
+    }
+    if (state.tool === 'text') {
+      const text = window.prompt('Texto da marcação tática:');
+      if (text) addItem({type:'text', x1:point.x, y1:point.y, text});
+      return;
+    }
+    state.draft = {type:state.tool, color:state.color, x1:point.x, y1:point.y, x2:point.x, y2:point.y};
+  });
+  canvas.addEventListener('pointermove', event => {
+    if (!state.draft) return;
+    const point = pointFromEvent(event);
+    state.draft.x2 = point.x;
+    state.draft.y2 = point.y;
+    render();
+  });
+  canvas.addEventListener('pointerup', () => {
+    if (!state.draft) return;
+    if (Math.hypot(state.draft.x2 - state.draft.x1, state.draft.y2 - state.draft.y1) > 6) addItem(state.draft);
+    state.draft = null;
+    render();
+  });
+  canvas.addEventListener('dblclick', () => {
+    if (state.tool === 'polygon' && state.polygon.length > 2) {
+      const points = state.polygon.slice();
+      state.polygon = [];
+      addItem({type:'polygon', points, closed:true});
+    }
+  });
+  $('tacticalImage').addEventListener('change', event => {
+    const file = event.target.files?.[0];
+    if (!file || !/^image\/(png|jpeg)$/.test(file.type)) {
+      alert('Envie uma imagem PNG, JPG ou JPEG.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const maxW = 1600;
+        const scale = Math.min(1, maxW / img.width);
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        state.image = img;
+        state.imageName = file.name.replace(/\.[^.]+$/, '') || 'jogada';
+        state.items = [];
+        state.polygon = [];
+        $('tacticalEmpty').style.display = 'none';
+        render();
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+  document.querySelectorAll('.tactical-tool').forEach(btn => btn.addEventListener('click', () => {
+    state.polygon = [];
+    state.draft = null;
+    state.preset = '';
+    document.querySelectorAll('.tactical-chip').forEach(chip => chip.classList.remove('active'));
+    setTool(btn.dataset.tool);
+    render();
+  }));
+  document.querySelectorAll('.tactical-color').forEach(btn => btn.addEventListener('click', () => setColor(btn.dataset.color)));
+  document.querySelectorAll('.tactical-chip').forEach(btn => btn.addEventListener('click', () => {
+    const config = presetConfig[btn.dataset.preset];
+    if (!config) return;
+    state.preset = btn.dataset.preset;
+    document.querySelectorAll('.tactical-chip').forEach(chip => chip.classList.toggle('active', chip === btn));
+    setTool(config.tool);
+    setColor(config.color);
+  }));
+  $('tacticalUndo').addEventListener('click', () => {
+    if (state.polygon.length) state.polygon.pop();
+    else state.items.pop();
+    render();
+  });
+  $('tacticalClear').addEventListener('click', () => {
+    if (!confirm('Limpar todas as marcações desta jogada?')) return;
+    state.items = [];
+    state.polygon = [];
+    render();
+  });
+  const buildAnalysis = () => {
+    const possession = getField('Possession') || 'o time em posse';
+    const defending = getField('Defending') || 'a defesa adversária';
+    const minute = getField('Minute') || 'momento analisado';
+    const phase = getField('Phase').toLowerCase();
+    const playType = getField('PlayType').toLowerCase();
+    const problem = getField('Problem') || 'um espaço livre entre linhas';
+    const decision = getField('Decision') || 'acelerar a circulação e acionar o companheiro melhor posicionado';
+    const risk = getField('Risk') || 'perder a bola em zona central e permitir transição rápida';
+    const opportunity = getField('Opportunity') || 'aproximar a equipe da zona de finalização';
+    return `Descrição da jogada
+No minuto ${minute}, ${possession} desenvolve uma situação de ${playType} na fase de ${phase}. A imagem marcada destaca os corredores de ação, as zonas de vantagem e os pontos de pressão do lance.
+
+Leitura ofensiva
+O time em posse encontra ${problem}. A melhor ocupação dos espaços pode gerar ${opportunity}, especialmente se a equipe mantiver amplitude, apoio próximo e timing no passe.
+
+Leitura defensiva
+${defending} precisa proteger a zona vulnerável, ajustar coberturas e reduzir o tempo de decisão do portador da bola. Quando o bloco demora a bascular, a jogada abre linha de passe ou zona de progressão.
+
+Melhor alternativa
+${decision}.
+
+Risco
+${risk}.
+
+Conclusão
+A jogada pede decisão rápida e coordenação coletiva. Com a marcação indicada no canvas, a vantagem principal está em transformar o espaço detectado em progressão, finalização ou superioridade numérica antes da recomposição defensiva.`;
+  };
+  $('tacticalGenerate').addEventListener('click', () => {
+    $('tacticalAnalysisText').textContent = buildAnalysis();
+  });
+  $('tacticalExportImage').addEventListener('click', () => {
+    if (!state.image) {
+      alert('Carregue uma imagem antes de exportar.');
+      return;
+    }
+    render();
+    download(canvas.toDataURL('image/png'), `${state.imageName}-analise-tatica.png`);
+  });
+  $('tacticalExportReport').addEventListener('click', () => {
+    if (!state.image) {
+      alert('Carregue uma imagem antes de exportar o relatório.');
+      return;
+    }
+    const analysis = $('tacticalAnalysisText').textContent.includes('Preencha os campos') ? buildAnalysis() : $('tacticalAnalysisText').textContent;
+    const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório tático</title><style>body{font-family:Arial,sans-serif;margin:32px;color:#111827;line-height:1.5}img{max-width:100%;border:1px solid #d1d5db;border-radius:10px}pre{white-space:pre-wrap;font-family:inherit;background:#f3f4f6;padding:18px;border-radius:10px}</style></head><body><h1>Análise Tática de Jogadas</h1><img src="${canvas.toDataURL('image/png')}" alt="Imagem analisada"><pre>${esc(analysis)}</pre></body></html>`;
+    const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+    download(URL.createObjectURL(blob), `${state.imageName}-relatorio-tatico.html`);
+  });
+  fields.forEach(name => ['input','change'].forEach(eventName => $('tactical' + name)?.addEventListener(eventName, () => {
+    const output = $('tacticalAnalysisText');
+    if (!output.textContent.includes('Preencha os campos')) output.textContent = buildAnalysis();
+  })));
+  render();
+}
+
 init();
+initTacticalPlayAnalyzer();
 
 setTimeout(() => {
   try {
