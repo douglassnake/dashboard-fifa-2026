@@ -577,6 +577,60 @@
       resize:vertical;
       line-height:1.4;
     }
+    .tactical-auto-box {
+      padding:12px;
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:16px;
+      background:rgba(0,0,0,.14);
+    }
+    .tactical-auto-box h3 {
+      margin:0 0 10px;
+      font-size:14px;
+      color:#fff;
+    }
+    .tactical-param-grid {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    .tactical-param-grid input, .tactical-param-grid select {
+      width:100%;
+      border:1px solid rgba(255,255,255,.20);
+      border-radius:14px;
+      background:linear-gradient(180deg, rgba(4,16,33,.97), rgba(10,20,43,.92));
+      color:#fff;
+      padding:11px 12px;
+      outline:none;
+      color-scheme:dark;
+      font-weight:650;
+      font-family:var(--font);
+    }
+    .tactical-marker-list {
+      display:flex;
+      flex-wrap:wrap;
+      gap:7px;
+      min-height:32px;
+      margin-top:10px;
+    }
+    .tactical-marker-pill {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:7px 9px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(255,255,255,.09);
+      color:#fff;
+      font-size:12px;
+      font-weight:800;
+    }
+    .tactical-marker-pill span {
+      width:9px;
+      height:9px;
+      border-radius:999px;
+      background:var(--marker-color);
+      box-shadow:0 0 0 2px rgba(255,255,255,.16);
+    }
     .tactical-output {
       min-height:170px;
       padding:14px;
@@ -592,7 +646,7 @@
       .tactical-play-grid { grid-template-columns:1fr; }
     }
     @media (max-width: 720px) {
-      .tactical-color-row, .tactical-form { grid-template-columns:1fr; }
+      .tactical-color-row, .tactical-form, .tactical-param-grid { grid-template-columns:1fr; }
       .tactical-form .wide { grid-column:auto; }
       .tactical-tool, .tactical-chip, .tactical-action { flex:1 1 calc(50% - 8px); }
       .tactical-canvas-wrap { min-height:280px; }
@@ -778,6 +832,8 @@
             <button class="tactical-tool" data-tool="text" type="button">Texto</button>
             <button class="tactical-tool" data-tool="highlightCircle" type="button">Destaque circular</button>
             <button class="tactical-tool" data-tool="highlightRect" type="button">Destaque retangular</button>
+            <button class="tactical-tool" data-tool="player" type="button">Marcar Jogadores</button>
+            <button class="tactical-tool" data-tool="ball" type="button">Marcar Bola</button>
             <button class="tactical-tool" data-tool="eraser" type="button">Apagar</button>
             <button class="tactical-action" id="tacticalUndo" type="button">Desfazer</button>
             <button class="tactical-action" id="tacticalClear" type="button">Limpar</button>
@@ -811,6 +867,52 @@
         </div>
 
         <aside class="tactical-side">
+          <div class="tactical-auto-box">
+            <h3>Análise semiautomática</h3>
+            <div class="tactical-param-grid">
+              <div>
+                <label>Time do jogador marcado</label>
+                <select id="tacticalMarkerTeam">
+                  <option value="Time A">Time A</option>
+                  <option value="Time B">Time B</option>
+                  <option value="Goleiro">Goleiro</option>
+                  <option value="Árbitro">Árbitro</option>
+                </select>
+              </div>
+              <div>
+                <label>Jogador com a posse</label>
+                <select id="tacticalPossessionPlayer">
+                  <option value="">Marque jogadores no canvas</option>
+                </select>
+              </div>
+              <div>
+                <label>Raio de pressão (px)</label>
+                <input id="tacticalPressureRadius" type="number" min="10" max="500" step="5" value="90">
+              </div>
+              <div>
+                <label>Distância mínima homem livre (px)</label>
+                <input id="tacticalFreeDistance" type="number" min="10" max="600" step="5" value="120">
+              </div>
+              <div>
+                <label>Interceptação da linha (px)</label>
+                <input id="tacticalInterceptDistance" type="number" min="5" max="250" step="5" value="45">
+              </div>
+              <div>
+                <label>Peso passe progressivo</label>
+                <input id="tacticalProgressWeight" type="number" min="0" max="5" step="0.1" value="1.2">
+              </div>
+              <div>
+                <label>Peso segurança do passe</label>
+                <input id="tacticalSafetyWeight" type="number" min="0" max="5" step="0.1" value="1.6">
+              </div>
+              <div>
+                <label>Bola</label>
+                <input id="tacticalBallStatus" type="text" value="Não marcada" readonly>
+              </div>
+            </div>
+            <div class="tactical-marker-list" id="tacticalMarkerList"></div>
+          </div>
+
           <div class="tactical-form">
             <div>
               <label>Time com a posse</label>
@@ -868,8 +970,10 @@
 
           <div class="tactical-report-actions">
             <button id="tacticalGenerate" type="button">Gerar análise textual</button>
+            <button id="tacticalAutoAnalyze" type="button">Analisar Jogada Automaticamente</button>
             <button id="tacticalExportImage" type="button">Exportar imagem analisada</button>
             <button id="tacticalExportReport" type="button">Exportar relatório</button>
+            <button id="tacticalExportJson" type="button">Exportar dados JSON</button>
           </div>
           <div class="tactical-output" id="tacticalAnalysisText">Preencha os campos e clique em "Gerar análise textual" para montar o relatório do lance.</div>
         </aside>
@@ -1408,8 +1512,15 @@ function initTacticalPlayAnalyzer() {
     items: [],
     draft: null,
     polygon: [],
-    preset: ''
+    preset: '',
+    players: [],
+    ball: null,
+    autoItems: [],
+    autoAnalysis: null,
+    nextPlayerId: 1,
+    history: []
   };
+  const teamColors = {'Time A':'#ef233c','Time B':'#2563eb','Goleiro':'#22c55e','Árbitro':'#111827'};
   const presetConfig = {
     'Linha de passe': {tool:'arrow', color:'#22c55e'},
     'Linha defensiva': {tool:'line', color:'#2563eb'},
@@ -1438,6 +1549,34 @@ function initTacticalPlayAnalyzer() {
     document.body.appendChild(link);
     link.click();
     link.remove();
+  };
+  const tacticalNumber = (id, fallback) => {
+    const value = Number($(id)?.value);
+    return Number.isFinite(value) ? value : fallback;
+  };
+  const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  const distanceToSegment = (point, a, b) => {
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const lenSq = dx * dx + dy * dy;
+    if (!lenSq) return distance(point, a);
+    const t = Math.max(0, Math.min(1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / lenSq));
+    return Math.hypot(point.x - (a.x + t * dx), point.y - (a.y + t * dy));
+  };
+  const updateMarkerPanel = () => {
+    const possessionSelect = $('tacticalPossessionPlayer');
+    if (possessionSelect) {
+      const selected = possessionSelect.value;
+      possessionSelect.innerHTML = state.players.length
+        ? state.players.map(player => `<option value="${player.id}">${player.id} - ${esc(player.team)}</option>`).join('')
+        : '<option value="">Marque jogadores no canvas</option>';
+      if (state.players.some(player => player.id === selected)) possessionSelect.value = selected;
+    }
+    if ($('tacticalBallStatus')) $('tacticalBallStatus').value = state.ball ? `x:${Math.round(state.ball.x)} y:${Math.round(state.ball.y)}` : 'Não marcada';
+    if ($('tacticalMarkerList')) {
+      $('tacticalMarkerList').innerHTML = state.players.length
+        ? state.players.map(player => `<span class="tactical-marker-pill" style="--marker-color:${teamColors[player.team] || '#fff'}"><span></span>${esc(player.id)} · ${esc(player.team)}</span>`).join('')
+        : '<span class="tactical-marker-pill"><span style="--marker-color:#94a3b8"></span>Nenhum jogador marcado</span>';
+    }
   };
   const setTool = tool => {
     state.tool = tool;
@@ -1507,6 +1646,62 @@ function initTacticalPlayAnalyzer() {
     }
     ctx.restore();
   };
+  const drawMarkerLabel = (text, x, y, color = '#ffffff') => {
+    ctx.save();
+    ctx.font = `800 ${Math.max(14, canvas.width * 0.017)}px ${getComputedStyle(document.body).fontFamily}`;
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = 'rgba(0,0,0,.74)';
+    ctx.fillStyle = color;
+    ctx.strokeText(text, x, y);
+    ctx.fillText(text, x, y);
+    ctx.restore();
+  };
+  const drawPlayer = player => {
+    const color = teamColors[player.team] || '#ffffff';
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, Math.max(10, canvas.width * 0.012), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    drawMarkerLabel(player.id, player.x + 13, player.y - 13, '#ffffff');
+    ctx.restore();
+  };
+  const drawBall = ball => {
+    if (!ball) return;
+    ctx.save();
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#111827';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, Math.max(7, canvas.width * 0.009), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    drawMarkerLabel('Bola', ball.x + 12, ball.y - 10, '#ffffff');
+    ctx.restore();
+  };
+  const drawAutoItem = item => {
+    if (item.type === 'autoLine') {
+      drawItem({type:'line', color:item.color, x1:item.from.x, y1:item.from.y, x2:item.to.x, y2:item.to.y});
+      drawMarkerLabel(item.label, (item.from.x + item.to.x) / 2 + 8, (item.from.y + item.to.y) / 2 - 8, item.color);
+    }
+    if (item.type === 'autoCircle') {
+      ctx.save();
+      ctx.strokeStyle = item.color;
+      ctx.fillStyle = item.color;
+      ctx.lineWidth = Math.max(4, canvas.width * 0.006);
+      ctx.globalAlpha = .20;
+      ctx.beginPath();
+      ctx.arc(item.x, item.y, item.radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.stroke();
+      drawMarkerLabel(item.label, item.x + item.radius + 6, item.y, item.color);
+      ctx.restore();
+    }
+  };
   const render = () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (state.image) ctx.drawImage(state.image, 0, 0, canvas.width, canvas.height);
@@ -1515,6 +1710,9 @@ function initTacticalPlayAnalyzer() {
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
     state.items.forEach(drawItem);
+    state.autoItems.forEach(drawAutoItem);
+    state.players.forEach(drawPlayer);
+    drawBall(state.ball);
     if (state.polygon.length) drawItem({type:'polygon', color:state.color, points:state.polygon, closed:false});
     if (state.draft) drawItem(state.draft);
   };
@@ -1529,6 +1727,7 @@ function initTacticalPlayAnalyzer() {
   };
   const addItem = item => {
     state.items.push({...item, color: item.color || state.color, preset: state.preset});
+    state.history.push({kind:'item'});
     state.draft = null;
     render();
   };
@@ -1537,8 +1736,46 @@ function initTacticalPlayAnalyzer() {
     const point = pointFromEvent(event);
     canvas.setPointerCapture(event.pointerId);
     if (state.tool === 'eraser') {
+      const playerIndex = state.players.findIndex(player => Math.hypot(player.x - point.x, player.y - point.y) < 24);
+      if (playerIndex >= 0) {
+        state.players.splice(playerIndex, 1);
+        state.autoItems = [];
+        state.autoAnalysis = null;
+        updateMarkerPanel();
+        render();
+        return;
+      }
+      if (state.ball && Math.hypot(state.ball.x - point.x, state.ball.y - point.y) < 24) {
+        state.ball = null;
+        state.autoItems = [];
+        state.autoAnalysis = null;
+        updateMarkerPanel();
+        render();
+        return;
+      }
       const index = findItem(point);
       if (index >= 0) state.items.splice(index, 1);
+      render();
+      return;
+    }
+    if (state.tool === 'player') {
+      const team = $('tacticalMarkerTeam')?.value || 'Time A';
+      const player = {id:`J${state.nextPlayerId++}`, team, x:point.x, y:point.y};
+      state.players.push(player);
+      state.history.push({kind:'player', id:player.id});
+      state.autoItems = [];
+      state.autoAnalysis = null;
+      updateMarkerPanel();
+      render();
+      return;
+    }
+    if (state.tool === 'ball') {
+      const previousBall = state.ball ? {...state.ball} : null;
+      state.ball = {x:point.x, y:point.y};
+      state.history.push({kind:'ball', previousBall});
+      state.autoItems = [];
+      state.autoAnalysis = null;
+      updateMarkerPanel();
       render();
       return;
     }
@@ -1592,6 +1829,13 @@ function initTacticalPlayAnalyzer() {
         state.imageName = file.name.replace(/\.[^.]+$/, '') || 'jogada';
         state.items = [];
         state.polygon = [];
+        state.players = [];
+        state.ball = null;
+        state.autoItems = [];
+        state.autoAnalysis = null;
+        state.nextPlayerId = 1;
+        state.history = [];
+        updateMarkerPanel();
         $('tacticalEmpty').style.display = 'none';
         render();
       };
@@ -1617,16 +1861,121 @@ function initTacticalPlayAnalyzer() {
     setColor(config.color);
   }));
   $('tacticalUndo').addEventListener('click', () => {
-    if (state.polygon.length) state.polygon.pop();
-    else state.items.pop();
+    if (state.polygon.length) {
+      state.polygon.pop();
+      updateMarkerPanel();
+      render();
+      return;
+    }
+    const action = state.history.pop();
+    if (action?.kind === 'item') state.items.pop();
+    else if (action?.kind === 'player') state.players = state.players.filter(player => player.id !== action.id);
+    else if (action?.kind === 'ball') state.ball = action.previousBall;
+    else if (action?.kind === 'auto') { state.autoItems = []; state.autoAnalysis = null; }
+    else if (state.autoItems.length) { state.autoItems = []; state.autoAnalysis = null; }
+    else if (state.items.length) state.items.pop();
+    updateMarkerPanel();
     render();
   });
   $('tacticalClear').addEventListener('click', () => {
     if (!confirm('Limpar todas as marcações desta jogada?')) return;
     state.items = [];
     state.polygon = [];
+    state.players = [];
+    state.ball = null;
+    state.autoItems = [];
+    state.autoAnalysis = null;
+    state.nextPlayerId = 1;
+    state.history = [];
+    updateMarkerPanel();
     render();
   });
+  const passRisk = (holder, teammate, opponents, interceptDistance) => {
+    const distances = opponents.map(opponent => distanceToSegment(opponent, holder, teammate));
+    const nearest = distances.length ? Math.min(...distances) : Infinity;
+    if (nearest <= interceptDistance) return {level:'alto', nearest};
+    if (nearest <= interceptDistance * 2) return {level:'médio', nearest};
+    return {level:'baixo', nearest};
+  };
+  const riskColor = risk => risk === 'baixo' ? '#22c55e' : risk === 'médio' ? '#facc15' : '#ef233c';
+  const riskValue = risk => risk === 'baixo' ? 1 : risk === 'médio' ? .55 : .12;
+  const buildAutoText = analysis => {
+    const holder = analysis.holder?.id || 'portador';
+    const pressureText = analysis.pressureCount === 0
+      ? 'sem pressão direta'
+      : analysis.pressureCount === 1
+        ? 'sob pressão moderada de 1 adversário'
+        : `sob pressão alta de ${analysis.pressureCount} adversários`;
+    const best = analysis.bestOption ? `${analysis.bestOption.player.id} (${analysis.bestOption.risk})` : 'nenhuma opção clara';
+    const free = analysis.freeMan ? analysis.freeMan.player.id : 'não identificado';
+    const risk = analysis.bestOption?.risk === 'alto'
+      ? 'alto, porque a melhor linha disponível pode ser interceptada'
+      : analysis.pressureCount >= 2
+        ? 'médio/alto pela pressão próxima ao portador'
+        : 'controlado se o passe sair no tempo certo';
+    return `Leitura da posse
+${holder} está com a posse e tem ${analysis.options.length} companheiro(s) mapeado(s) como opção de passe. O sistema considera as distâncias entre jogadores, a proximidade dos adversários da linha de passe e a pressão ao redor da bola.
+
+Nível de pressão
+O portador está ${pressureText}. ${analysis.pressers.length ? `Pressionam: ${analysis.pressers.map(p => p.id).join(', ')}.` : 'Nenhum adversário está dentro do raio configurado.'}
+
+Melhor opção de passe
+${analysis.bestOption ? `A melhor opção é ${best}, com distância de ${Math.round(analysis.bestOption.distance)} px e adversário mais próximo a ${Math.round(analysis.bestOption.nearestOpponentDistance)} px.` : 'Não há companheiro com linha de passe suficientemente segura.'}
+
+Homem livre
+${analysis.freeMan ? `${free} é o homem livre, pois tem separação relevante do adversário mais próximo e linha de passe ${analysis.freeMan.risk}.` : 'Nenhum homem livre atende aos limites definidos.'}
+
+Risco da jogada
+O risco é ${risk}. Linhas verdes indicam passe preferencial, amarelas indicam opção intermediária e vermelhas indicam rota arriscada.
+
+Conclusão tática
+${analysis.bestOption ? `A jogada favorece acionar ${analysis.bestOption.player.id} antes da recomposição defensiva, priorizando segurança de passe e progressão.` : 'A equipe deve proteger a posse, atrair pressão ou circular a bola antes de tentar uma progressão vertical.'}`;
+  };
+  const analyzeAutomatically = () => {
+    if (state.players.length < 2) {
+      alert('Marque pelo menos o portador e um companheiro para analisar automaticamente.');
+      return;
+    }
+    const holderId = $('tacticalPossessionPlayer')?.value;
+    const holder = state.players.find(player => player.id === holderId) || state.players[0];
+    if (!holder || !['Time A','Time B'].includes(holder.team)) {
+      alert('Selecione um jogador de Time A ou Time B como portador da bola.');
+      return;
+    }
+    if ($('tacticalPossessionPlayer')) $('tacticalPossessionPlayer').value = holder.id;
+    const opponentTeam = holder.team === 'Time A' ? 'Time B' : 'Time A';
+    const teammates = state.players.filter(player => player.team === holder.team && player.id !== holder.id);
+    const opponents = state.players.filter(player => player.team === opponentTeam);
+    const pressureRadius = tacticalNumber('tacticalPressureRadius', 90);
+    const freeDistance = tacticalNumber('tacticalFreeDistance', 120);
+    const interceptDistance = tacticalNumber('tacticalInterceptDistance', 45);
+    const progressWeight = tacticalNumber('tacticalProgressWeight', 1.2);
+    const safetyWeight = tacticalNumber('tacticalSafetyWeight', 1.6);
+    const pressers = opponents.filter(opponent => distance(opponent, holder) <= pressureRadius);
+    const options = teammates.map(player => {
+      const nearestOpponentDistance = opponents.length ? Math.min(...opponents.map(opponent => distance(player, opponent))) : Infinity;
+      const risk = passRisk(holder, player, opponents, interceptDistance);
+      const progressive = Math.max(0, player.x - holder.x);
+      const score = (riskValue(risk.level) * 100 * safetyWeight) + (progressive * progressWeight / Math.max(canvas.width, 1) * 100) + Math.min(nearestOpponentDistance, freeDistance * 1.5) / Math.max(freeDistance, 1) * 35;
+      return {player, distance:distance(holder, player), nearestOpponentDistance, lineDistance:risk.nearest, risk:risk.level, progressive, score};
+    }).sort((a, b) => b.score - a.score);
+    const eligibleFree = options.filter(option => option.nearestOpponentDistance >= freeDistance && option.risk !== 'alto');
+    const freeMan = eligibleFree[0] || null;
+    const bestOption = options.find(option => option.risk !== 'alto') || options[0] || null;
+    state.autoItems = options.map(option => ({
+      type:'autoLine',
+      from:holder,
+      to:option.player,
+      color: option === bestOption ? '#22c55e' : riskColor(option.risk),
+      label: option === bestOption ? 'melhor passe' : `risco ${option.risk}`
+    }));
+    if (freeMan) state.autoItems.push({type:'autoCircle', x:freeMan.player.x, y:freeMan.player.y, radius:32, color:'#facc15', label:'homem livre'});
+    pressers.forEach(player => state.autoItems.push({type:'autoCircle', x:player.x, y:player.y, radius:28, color:'#ef233c', label:'pressão'}));
+    state.autoAnalysis = {holder, opponentTeam, teammates, opponents, pressers, pressureCount:pressers.length, options, freeMan, bestOption, params:{pressureRadius, freeDistance, interceptDistance, progressWeight, safetyWeight}};
+    state.history.push({kind:'auto'});
+    $('tacticalAnalysisText').textContent = buildAutoText(state.autoAnalysis);
+    render();
+  };
   const buildAnalysis = () => {
     const possession = getField('Possession') || 'o time em posse';
     const defending = getField('Defending') || 'a defesa adversária';
@@ -1658,6 +2007,37 @@ A jogada pede decisão rápida e coordenação coletiva. Com a marcação indica
   $('tacticalGenerate').addEventListener('click', () => {
     $('tacticalAnalysisText').textContent = buildAnalysis();
   });
+  $('tacticalAutoAnalyze').addEventListener('click', analyzeAutomatically);
+  const exportData = () => ({
+    imageName: state.imageName,
+    players: state.players.map(player => ({id:player.id, team:player.team, x:Math.round(player.x), y:Math.round(player.y)})),
+    ball: state.ball ? {x:Math.round(state.ball.x), y:Math.round(state.ball.y)} : null,
+    possessionPlayerId: $('tacticalPossessionPlayer')?.value || null,
+    parameters: {
+      pressureRadius: tacticalNumber('tacticalPressureRadius', 90),
+      freeDistance: tacticalNumber('tacticalFreeDistance', 120),
+      interceptDistance: tacticalNumber('tacticalInterceptDistance', 45),
+      progressWeight: tacticalNumber('tacticalProgressWeight', 1.2),
+      safetyWeight: tacticalNumber('tacticalSafetyWeight', 1.6)
+    },
+    automaticAnalysis: state.autoAnalysis ? {
+      holderId: state.autoAnalysis.holder?.id,
+      opponentTeam: state.autoAnalysis.opponentTeam,
+      pressureCount: state.autoAnalysis.pressureCount,
+      pressers: state.autoAnalysis.pressers.map(player => player.id),
+      freeManId: state.autoAnalysis.freeMan?.player?.id || null,
+      bestOptionId: state.autoAnalysis.bestOption?.player?.id || null,
+      passOptions: state.autoAnalysis.options.map(option => ({
+        playerId: option.player.id,
+        distance: Math.round(option.distance),
+        nearestOpponentDistance: Math.round(option.nearestOpponentDistance),
+        lineDistance: Number.isFinite(option.lineDistance) ? Math.round(option.lineDistance) : null,
+        risk: option.risk,
+        score: Math.round(option.score)
+      }))
+    } : null,
+    reportText: $('tacticalAnalysisText')?.textContent || ''
+  });
   $('tacticalExportImage').addEventListener('click', () => {
     if (!state.image) {
       alert('Carregue uma imagem antes de exportar.');
@@ -1676,10 +2056,15 @@ A jogada pede decisão rápida e coordenação coletiva. Com a marcação indica
     const blob = new Blob([html], {type:'text/html;charset=utf-8'});
     download(URL.createObjectURL(blob), `${state.imageName}-relatorio-tatico.html`);
   });
+  $('tacticalExportJson').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(exportData(), null, 2)], {type:'application/json;charset=utf-8'});
+    download(URL.createObjectURL(blob), `${state.imageName}-dados-jogada.json`);
+  });
   fields.forEach(name => ['input','change'].forEach(eventName => $('tactical' + name)?.addEventListener(eventName, () => {
     const output = $('tacticalAnalysisText');
     if (!output.textContent.includes('Preencha os campos')) output.textContent = buildAnalysis();
   })));
+  updateMarkerPanel();
   render();
 }
 
