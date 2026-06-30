@@ -642,14 +642,88 @@
       font-size:13px;
       white-space:pre-wrap;
     }
+    .tactical-history-panel { margin-top:16px; }
+    .tactical-history-filters {
+      display:grid;
+      grid-template-columns:repeat(5, minmax(0,1fr));
+      gap:10px;
+      margin:12px 0 14px;
+    }
+    .tactical-history-filters input, .tactical-history-filters select {
+      width:100%;
+      border:1px solid rgba(255,255,255,.20);
+      border-radius:14px;
+      background:linear-gradient(180deg, rgba(4,16,33,.97), rgba(10,20,43,.92));
+      color:#fff;
+      padding:11px 12px;
+      outline:none;
+      color-scheme:dark;
+      font-weight:650;
+      font-family:var(--font);
+    }
+    .tactical-history-list {
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:12px;
+    }
+    .tactical-history-card {
+      display:grid;
+      grid-template-columns:140px minmax(0,1fr);
+      gap:12px;
+      padding:12px;
+      border:1px solid rgba(255,255,255,.15);
+      border-radius:16px;
+      background:rgba(0,0,0,.15);
+    }
+    .tactical-history-card img {
+      width:100%;
+      aspect-ratio:16/10;
+      object-fit:cover;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(255,255,255,.06);
+    }
+    .tactical-history-meta h3 {
+      margin:0 0 7px;
+      font-size:15px;
+      color:#fff;
+      overflow-wrap:anywhere;
+    }
+    .tactical-history-meta p {
+      margin:0 0 8px;
+      color:#dbeafe;
+      font-size:12px;
+      line-height:1.45;
+    }
+    .tactical-history-actions {
+      display:flex;
+      flex-wrap:wrap;
+      gap:7px;
+    }
+    .tactical-history-actions button {
+      padding:9px 10px;
+      border-radius:11px;
+      font-size:11px;
+      box-shadow:none;
+    }
+    .tactical-history-empty {
+      padding:16px;
+      border:1px dashed rgba(255,255,255,.18);
+      border-radius:16px;
+      color:#dbeafe;
+      background:rgba(0,0,0,.13);
+    }
     @media (max-width: 1100px) {
       .tactical-play-grid { grid-template-columns:1fr; }
+      .tactical-history-filters { grid-template-columns:repeat(2, minmax(0,1fr)); }
+      .tactical-history-list { grid-template-columns:1fr; }
     }
     @media (max-width: 720px) {
-      .tactical-color-row, .tactical-form, .tactical-param-grid { grid-template-columns:1fr; }
+      .tactical-color-row, .tactical-form, .tactical-param-grid, .tactical-history-filters { grid-template-columns:1fr; }
       .tactical-form .wide { grid-column:auto; }
       .tactical-tool, .tactical-chip, .tactical-action { flex:1 1 calc(50% - 8px); }
       .tactical-canvas-wrap { min-height:280px; }
+      .tactical-history-card { grid-template-columns:1fr; }
     }
 
   </style>
@@ -914,6 +988,10 @@
           </div>
 
           <div class="tactical-form">
+            <div class="wide">
+              <label>Jogo</label>
+              <input id="tacticalGame" type="text" placeholder="Ex.: Brasil x França">
+            </div>
             <div>
               <label>Time com a posse</label>
               <input id="tacticalPossession" type="text" placeholder="Ex.: Brasil">
@@ -963,6 +1041,14 @@
               <textarea id="tacticalRisk" placeholder="Ex.: perda por dentro e contra-ataque"></textarea>
             </div>
             <div class="wide">
+              <label>Nível de risco</label>
+              <select id="tacticalRiskLevel">
+                <option>Baixo</option>
+                <option>Médio</option>
+                <option>Alto</option>
+              </select>
+            </div>
+            <div class="wide">
               <label>Oportunidade criada</label>
               <textarea id="tacticalOpportunity" placeholder="Ex.: superioridade numérica no último terço"></textarea>
             </div>
@@ -974,10 +1060,38 @@
             <button id="tacticalExportImage" type="button">Exportar imagem analisada</button>
             <button id="tacticalExportReport" type="button">Exportar relatório</button>
             <button id="tacticalExportJson" type="button">Exportar dados JSON</button>
+            <button id="tacticalSaveAnalysis" type="button">Salvar Análise</button>
           </div>
           <div class="tactical-output" id="tacticalAnalysisText">Preencha os campos e clique em "Gerar análise textual" para montar o relatório do lance.</div>
         </aside>
       </div>
+    </section>
+
+    <section class="panel tactical-history-panel" id="tacticalHistorySection">
+      <h2>Histórico de Análises</h2>
+      <div class="tactical-history-filters">
+        <div>
+          <label>Time</label>
+          <input id="historyFilterTeam" type="search" placeholder="Filtrar por time">
+        </div>
+        <div>
+          <label>Jogador</label>
+          <input id="historyFilterPlayer" type="search" placeholder="Ex.: J1">
+        </div>
+        <div>
+          <label>Jogo</label>
+          <input id="historyFilterGame" type="search" placeholder="Filtrar por jogo">
+        </div>
+        <div>
+          <label>Fase</label>
+          <select id="historyFilterPhase"><option value="">Todas</option></select>
+        </div>
+        <div>
+          <label>Tipo de jogada</label>
+          <select id="historyFilterPlayType"><option value="">Todos</option></select>
+        </div>
+      </div>
+      <div class="tactical-history-list" id="tacticalHistoryList"></div>
     </section>
 
     <p class="footer">Modelo de nota geral: 30% Ataque + 25% Defesa + 20% Controle + 15% Físico + 10% Disciplina. Dados atualizados a partir das planilhas Estatisticas.xlsx e Estatisticas_jogador.xlsx.</p>
@@ -1508,6 +1622,7 @@ function initTacticalPlayAnalyzer() {
     tool: 'circle',
     color: '#ef233c',
     image: null,
+    imageDataUrl: '',
     imageName: 'jogada',
     items: [],
     draft: null,
@@ -1533,7 +1648,7 @@ function initTacticalPlayAnalyzer() {
     'Bloco defensivo': {tool:'polygon', color:'#2563eb'},
     'Superioridade numérica': {tool:'polygon', color:'#22c55e'}
   };
-  const fields = ['Possession','Defending','Minute','Phase','PlayType','Problem','Decision','Risk','Opportunity'];
+  const fields = ['Game','Possession','Defending','Minute','Phase','PlayType','Problem','Decision','Risk','RiskLevel','Opportunity'];
   const getField = name => ($('tactical' + name)?.value || '').trim();
   const pointFromEvent = event => {
     const rect = canvas.getBoundingClientRect();
@@ -1550,6 +1665,23 @@ function initTacticalPlayAnalyzer() {
     link.click();
     link.remove();
   };
+  const historyKey = 'fifa2026_tactical_analysis_history';
+  const loadSavedAnalyses = () => {
+    try { return JSON.parse(localStorage.getItem(historyKey) || '[]'); }
+    catch (error) { console.error('Erro ao ler histórico tático:', error); return []; }
+  };
+  const storeSavedAnalyses = analyses => {
+    try {
+      localStorage.setItem(historyKey, JSON.stringify(analyses));
+      return true;
+    } catch (error) {
+      alert('Não foi possível salvar no localStorage. A imagem pode estar grande demais para o limite do navegador.');
+      console.error('Erro ao salvar histórico tático:', error);
+      return false;
+    }
+  };
+  const reportHtml = (imageDataUrl, analysisText, title = 'Análise Tática de Jogadas') =>
+    `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${esc(title)}</title><style>body{font-family:Arial,sans-serif;margin:32px;color:#111827;line-height:1.5}img{max-width:100%;border:1px solid #d1d5db;border-radius:10px}pre{white-space:pre-wrap;font-family:inherit;background:#f3f4f6;padding:18px;border-radius:10px}</style></head><body><h1>${esc(title)}</h1><img src="${imageDataUrl}" alt="Imagem analisada"><pre>${esc(analysisText)}</pre></body></html>`;
   const tacticalNumber = (id, fallback) => {
     const value = Number($(id)?.value);
     return Number.isFinite(value) ? value : fallback;
@@ -1826,6 +1958,7 @@ function initTacticalPlayAnalyzer() {
         canvas.width = Math.round(img.width * scale);
         canvas.height = Math.round(img.height * scale);
         state.image = img;
+        state.imageDataUrl = reader.result;
         state.imageName = file.name.replace(/\.[^.]+$/, '') || 'jogada';
         state.items = [];
         state.polygon = [];
@@ -1962,6 +2095,9 @@ ${analysis.bestOption ? `A jogada favorece acionar ${analysis.bestOption.player.
     const eligibleFree = options.filter(option => option.nearestOpponentDistance >= freeDistance && option.risk !== 'alto');
     const freeMan = eligibleFree[0] || null;
     const bestOption = options.find(option => option.risk !== 'alto') || options[0] || null;
+    if ($('tacticalRiskLevel')) {
+      $('tacticalRiskLevel').value = bestOption?.risk === 'alto' || pressers.length >= 3 ? 'Alto' : bestOption?.risk === 'mÃ©dio' || pressers.length >= 1 ? 'Médio' : 'Baixo';
+    }
     state.autoItems = options.map(option => ({
       type:'autoLine',
       from:holder,
@@ -2009,10 +2145,20 @@ A jogada pede decisão rápida e coordenação coletiva. Com a marcação indica
   });
   $('tacticalAutoAnalyze').addEventListener('click', analyzeAutomatically);
   const exportData = () => ({
+    game: getField('Game'),
+    analyzedTeam: getField('Possession'),
+    opponent: getField('Defending'),
+    minute: getField('Minute'),
+    phase: getField('Phase'),
+    playType: getField('PlayType'),
+    possessionPlayerId: $('tacticalPossessionPlayer')?.value || null,
+    bestDecision: getField('Decision'),
+    riskLevel: getField('RiskLevel'),
+    riskDescription: getField('Risk'),
+    createdAt: new Date().toISOString(),
     imageName: state.imageName,
     players: state.players.map(player => ({id:player.id, team:player.team, x:Math.round(player.x), y:Math.round(player.y)})),
     ball: state.ball ? {x:Math.round(state.ball.x), y:Math.round(state.ball.y)} : null,
-    possessionPlayerId: $('tacticalPossessionPlayer')?.value || null,
     parameters: {
       pressureRadius: tacticalNumber('tacticalPressureRadius', 90),
       freeDistance: tacticalNumber('tacticalFreeDistance', 120),
@@ -2038,6 +2184,150 @@ A jogada pede decisão rápida e coordenação coletiva. Com a marcação indica
     } : null,
     reportText: $('tacticalAnalysisText')?.textContent || ''
   });
+  const safeName = value => String(value || 'analise-tatica').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w-]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'analise-tatica';
+  const currentAnalysisText = () => $('tacticalAnalysisText').textContent.includes('Preencha os campos') ? buildAnalysis() : $('tacticalAnalysisText').textContent;
+  const filteredAnalyses = () => {
+    const team = ($('historyFilterTeam')?.value || '').toLowerCase();
+    const player = ($('historyFilterPlayer')?.value || '').toLowerCase();
+    const game = ($('historyFilterGame')?.value || '').toLowerCase();
+    const phase = $('historyFilterPhase')?.value || '';
+    const playType = $('historyFilterPlayType')?.value || '';
+    return loadSavedAnalyses().filter(item => {
+      const hayTeam = `${item.analyzedTeam || ''} ${item.opponent || ''}`.toLowerCase();
+      const hayPlayer = `${item.possessionPlayer || ''} ${(item.data?.players || []).map(p => p.id).join(' ')}`.toLowerCase();
+      return (!team || hayTeam.includes(team))
+        && (!player || hayPlayer.includes(player))
+        && (!game || String(item.game || '').toLowerCase().includes(game))
+        && (!phase || item.phase === phase)
+        && (!playType || item.playType === playType);
+    });
+  };
+  const refreshHistoryFilters = analyses => {
+    const fill = (id, values, label) => {
+      const select = $(id);
+      if (!select) return;
+      const currentValue = select.value;
+      select.innerHTML = `<option value="">${label}</option>` + [...new Set(values.filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR')).map(value => `<option value="${esc(value)}">${esc(value)}</option>`).join('');
+      if ([...select.options].some(option => option.value === currentValue)) select.value = currentValue;
+    };
+    fill('historyFilterPhase', analyses.map(item => item.phase), 'Todas');
+    fill('historyFilterPlayType', analyses.map(item => item.playType), 'Todos');
+  };
+  const renderSavedHistory = () => {
+    const analyses = loadSavedAnalyses();
+    refreshHistoryFilters(analyses);
+    const list = $('tacticalHistoryList');
+    if (!list) return;
+    const rows = filteredAnalyses();
+    if (!rows.length) {
+      list.innerHTML = '<div class="tactical-history-empty">Nenhuma análise salva para os filtros atuais.</div>';
+      return;
+    }
+    list.innerHTML = rows.map(item => {
+      const date = item.createdAt ? new Date(item.createdAt).toLocaleString('pt-BR') : '-';
+      const title = item.game || `${item.analyzedTeam || 'Time'} x ${item.opponent || 'Adversário'}`;
+      const details = `${item.analyzedTeam || '-'} · ${item.opponent || '-'} · ${item.minute || '-'} · ${item.phase || '-'} · ${item.playType || '-'}`;
+      return `<article class="tactical-history-card">
+        <img src="${item.imageDataUrl}" alt="Análise salva">
+        <div class="tactical-history-meta">
+          <h3>${esc(title)}</h3>
+          <p>${esc(details)}<br>Posse: ${esc(item.possessionPlayer || '-')} · Risco: ${esc(item.riskLevel || '-')}<br>${esc(date)}</p>
+          <div class="tactical-history-actions">
+            <button type="button" data-history-action="open" data-id="${esc(item.id)}">Reabrir</button>
+            <button type="button" data-history-action="image" data-id="${esc(item.id)}">Baixar imagem</button>
+            <button type="button" data-history-action="report" data-id="${esc(item.id)}">Baixar relatório</button>
+            <button type="button" data-history-action="delete" data-id="${esc(item.id)}">Excluir</button>
+          </div>
+        </div>
+      </article>`;
+    }).join('');
+  };
+  const saveCurrentAnalysis = () => {
+    if (!state.image) {
+      alert('Carregue uma imagem antes de salvar a análise.');
+      return;
+    }
+    render();
+    const imageDataUrl = canvas.toDataURL('image/png');
+    const analysisText = currentAnalysisText();
+    const data = exportData();
+    const createdAt = new Date().toISOString();
+    data.createdAt = createdAt;
+    const record = {
+      id: `analise-${Date.now()}`,
+      imageDataUrl,
+      originalImageDataUrl: state.imageDataUrl || imageDataUrl,
+      reportHtml: reportHtml(imageDataUrl, analysisText, data.game || 'Análise Tática de Jogadas'),
+      text: analysisText,
+      data,
+      game: data.game || `${data.analyzedTeam || 'Time'} x ${data.opponent || 'Adversário'}`,
+      analyzedTeam: data.analyzedTeam,
+      opponent: data.opponent,
+      minute: data.minute,
+      phase: data.phase,
+      playType: data.playType,
+      possessionPlayer: data.possessionPlayerId,
+      bestDecision: data.bestDecision,
+      riskLevel: data.riskLevel,
+      createdAt
+    };
+    const analyses = loadSavedAnalyses();
+    analyses.unshift(record);
+    if (storeSavedAnalyses(analyses)) {
+      renderSavedHistory();
+      alert('Análise salva no histórico local.');
+    }
+  };
+  const openSavedAnalysis = item => {
+    const img = new Image();
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      state.image = img;
+      state.imageDataUrl = item.imageDataUrl;
+      state.imageName = safeName(item.game || item.id);
+      state.items = [];
+      state.polygon = [];
+      state.players = [];
+      state.ball = null;
+      state.autoItems = [];
+      state.autoAnalysis = null;
+      state.history = [];
+      $('tacticalEmpty').style.display = 'none';
+      $('tacticalGame').value = item.game || '';
+      $('tacticalPossession').value = item.analyzedTeam || '';
+      $('tacticalDefending').value = item.opponent || '';
+      $('tacticalMinute').value = item.minute || '';
+      if ($('tacticalPhase')) $('tacticalPhase').value = item.phase || $('tacticalPhase').value;
+      if ($('tacticalPlayType')) $('tacticalPlayType').value = item.playType || $('tacticalPlayType').value;
+      $('tacticalDecision').value = item.bestDecision || '';
+      $('tacticalRisk').value = item.data?.riskDescription || '';
+      if ($('tacticalRiskLevel')) $('tacticalRiskLevel').value = item.riskLevel || $('tacticalRiskLevel').value;
+      $('tacticalAnalysisText').textContent = item.text || item.data?.reportText || '';
+      updateMarkerPanel();
+      render();
+      $('tacticalPlaySection').scrollIntoView({behavior:'smooth', block:'start'});
+    };
+    img.src = item.imageDataUrl;
+  };
+  const handleHistoryAction = event => {
+    const button = event.target.closest('[data-history-action]');
+    if (!button) return;
+    const analyses = loadSavedAnalyses();
+    const item = analyses.find(record => record.id === button.dataset.id);
+    if (!item) return;
+    const filename = safeName(item.game || item.id);
+    if (button.dataset.historyAction === 'open') openSavedAnalysis(item);
+    if (button.dataset.historyAction === 'image') download(item.imageDataUrl, `${filename}.png`);
+    if (button.dataset.historyAction === 'report') {
+      const blob = new Blob([item.reportHtml || reportHtml(item.imageDataUrl, item.text || '', item.game || 'Análise Tática')], {type:'text/html;charset=utf-8'});
+      download(URL.createObjectURL(blob), `${filename}-relatorio.html`);
+    }
+    if (button.dataset.historyAction === 'delete' && confirm('Excluir esta análise do histórico local?')) {
+      storeSavedAnalyses(analyses.filter(record => record.id !== item.id));
+      renderSavedHistory();
+    }
+  };
   $('tacticalExportImage').addEventListener('click', () => {
     if (!state.image) {
       alert('Carregue uma imagem antes de exportar.');
@@ -2060,11 +2350,16 @@ A jogada pede decisão rápida e coordenação coletiva. Com a marcação indica
     const blob = new Blob([JSON.stringify(exportData(), null, 2)], {type:'application/json;charset=utf-8'});
     download(URL.createObjectURL(blob), `${state.imageName}-dados-jogada.json`);
   });
+  $('tacticalSaveAnalysis').addEventListener('click', saveCurrentAnalysis);
+  $('tacticalHistoryList')?.addEventListener('click', handleHistoryAction);
+  ['historyFilterTeam','historyFilterPlayer','historyFilterGame','historyFilterPhase','historyFilterPlayType'].forEach(id => $(id)?.addEventListener('input', renderSavedHistory));
+  ['historyFilterPhase','historyFilterPlayType'].forEach(id => $(id)?.addEventListener('change', renderSavedHistory));
   fields.forEach(name => ['input','change'].forEach(eventName => $('tactical' + name)?.addEventListener(eventName, () => {
     const output = $('tacticalAnalysisText');
     if (!output.textContent.includes('Preencha os campos')) output.textContent = buildAnalysis();
   })));
   updateMarkerPanel();
+  renderSavedHistory();
   render();
 }
 
